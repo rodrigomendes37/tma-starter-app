@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: tma_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tma_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Test actual database connectivity, not just process readiness
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tma_db"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tma_backend
+    env_file:
+      - .env  # Load environment variables from .env file in project root
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      # Mount uploads directory to persist files and make them accessible from host
+      # This overrides the ./backend:/app mount for the uploads subdirectory
+      - ./backend/uploads:/app/uploads
+    command: poetry run uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+
+  # React Frontend Service
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: tma_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ui:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  # Note: uploads are stored in ./backend/uploads via bind mount (see backend service)
+

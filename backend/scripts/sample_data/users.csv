@@ -1,0 +1,27 @@
+username,email,password,role,email_verified,first_name,last_name,child_name,child_sex_assigned_at_birth,child_dob,avatar_url
+ksanft,ksanft@unca.edu,password,admin,true,Kevin,Sanft,,,,https://ui-avatars.com/api/?name=Kevin+Sanft&size=255&background=996F9D&color=fff&bold=true
+svanwart,svanwart@unca.edu,password,admin,true,Sarah,Van Wart,,,,https://ui-avatars.com/api/?name=Sarah+VanWart&size=255&background=669AC4&color=fff&bold=true
+ashley_sanchez,ashley.sanchez@example.com,password,user,true,Ashley,Sanchez,Brandon,female,2023-03-28,https://ui-avatars.com/api/?name=Ashley+Sanchez&size=255&background=996F9D&color=fff&bold=true
+samantha_phelps,samantha.phelps@example.com,password,user,true,Samantha,Phelps,Joshua,female,2024-06-18,https://ui-avatars.com/api/?name=Samantha+Phelps&size=255&background=515251&color=fff&bold=true
+crystal_chapman,crystal.chapman@example.com,password,user,true,Crystal,Chapman,Courtney,other,2023-08-08,https://ui-avatars.com/api/?name=Crystal+Chapman&size=255&background=669AC4&color=fff&bold=true
+robert_hurst,robert.hurst@example.com,password,user,true,Robert,Hurst,Jennifer,male,2025-07-24,https://ui-avatars.com/api/?name=Robert+Hurst&size=255&background=669AC4&color=fff&bold=true
+jared_jackson,jared.jackson@example.com,password,user,true,Jared,Jackson,Ryan,male,2023-06-23,https://ui-avatars.com/api/?name=Jared+Jackson&size=255&background=746994&color=fff&bold=true
+haley_howard,haley.howard@example.com,password,user,true,Haley,Howard,Angela,other,2023-02-03,https://ui-avatars.com/api/?name=Haley+Howard&size=255&background=669AC4&color=fff&bold=true
+steven_adkins,steven.adkins@example.com,password,user,true,Steven,Adkins,Courtney,female,2023-11-05,https://ui-avatars.com/api/?name=Steven+Adkins&size=255&background=5F4483&color=fff&bold=true
+amanda_arnold,amanda.arnold@example.com,password,user,true,Amanda,Arnold,Jamie,male,2024-06-27,https://ui-avatars.com/api/?name=Amanda+Arnold&size=255&background=32396C&color=fff&bold=true
+denise_richards,denise.richards@example.com,password,user,true,Denise,Richards,Daniel,female,2023-12-25,https://ui-avatars.com/api/?name=Denise+Richards&size=255&background=4F71A3&color=fff&bold=true
+emily_gomez,emily.gomez@example.com,password,user,true,Emily,Gomez,Sara,male,2025-04-04,https://ui-avatars.com/api/?name=Emily+Gomez&size=255&background=504468&color=fff&bold=true
+katherine_howard,katherine.howard@example.com,password,user,true,Katherine,Howard,Sarah,male,2023-07-21,https://ui-avatars.com/api/?name=Katherine+Howard&size=255&background=746994&color=fff&bold=true
+ryan_mccall,ryan.mccall@example.com,password,user,true,Ryan,Mccall,Ruben,female,2023-09-21,https://ui-avatars.com/api/?name=Ryan+Mccall&size=255&background=3C5E96&color=fff&bold=true
+andrea_murphy,andrea.murphy@example.com,password,user,true,Andrea,Murphy,Scott,male,2024-10-10,https://ui-avatars.com/api/?name=Andrea+Murphy&size=255&background=504468&color=fff&bold=true
+jonathon_robinson,jonathon.robinson@example.com,password,user,true,Jonathon,Robinson,Sherri,other,2023-07-18,https://ui-avatars.com/api/?name=Jonathon+Robinson&size=255&background=996F9D&color=fff&bold=true
+brandon_powell,brandon.powell@example.com,password,user,true,Brandon,Powell,Deanna,other,2024-12-02,https://ui-avatars.com/api/?name=Brandon+Powell&size=255&background=996F9D&color=fff&bold=true
+john_kidd,john.kidd@example.com,password,user,true,John,Kidd,Caitlin,other,2024-10-01,https://ui-avatars.com/api/?name=John+Kidd&size=255&background=669AC4&color=fff&bold=true
+michelle_obrien,michelle.obrien@example.com,password,user,true,Michelle,Obrien,Todd,male,2023-12-31,https://ui-avatars.com/api/?name=Michelle+Obrien&size=255&background=5F4483&color=fff&bold=true
+denise_wright,denise.wright@example.com,password,user,true,Denise,Wright,Maria,other,2023-11-06,https://ui-avatars.com/api/?name=Denise+Wright&size=255&background=746994&color=fff&bold=true
+david_saunders,david.saunders@example.com,password,user,true,David,Saunders,Lori,male,2025-06-16,https://ui-avatars.com/api/?name=David+Saunders&size=255&background=3C5E96&color=fff&bold=true
+david_robinson,david.robinson@example.com,password,user,true,David,Robinson,Denise,female,2024-07-30,https://ui-avatars.com/api/?name=David+Robinson&size=255&background=4F71A3&color=fff&bold=true
+elizabeth_gomez,elizabeth.gomez@example.com,password,user,true,Elizabeth,Gomez,Aaron,other,2024-09-13,https://ui-avatars.com/api/?name=Elizabeth+Gomez&size=255&background=515251&color=fff&bold=true
+steven_king,steven.king@example.com,password,user,true,Steven,King,Jeffrey,other,2024-11-28,https://ui-avatars.com/api/?name=Steven+King&size=255&background=3C5E96&color=fff&bold=true
+judy_sawyer,judy.sawyer@example.com,password,user,true,Judy,Sawyer,Francis,male,2024-04-29,https://ui-avatars.com/api/?name=Judy+Sawyer&size=255&background=4F71A3&color=fff&bold=true
+mark_burton,mark.burton@example.com,password,user,true,Mark,Burton,Amy,male,2025-02-08,https://ui-avatars.com/api/?name=Mark+Burton&size=255&background=32396C&color=fff&bold=true
