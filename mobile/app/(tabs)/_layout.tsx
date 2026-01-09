@@ -6,12 +6,14 @@ import { designTokens } from '../../theme';
 
 export default function TabsLayout() {
     const insets = useSafeAreaInsets();
-    
+
     // Calculate tab bar height with safe area insets
     const baseHeight = Platform.OS === 'ios' ? 88 : 64;
-    const bottomPadding = Platform.OS === 'ios' ? 24 : Math.max(insets.bottom, 8);
-    const tabBarHeight = baseHeight + (Platform.OS === 'android' ? insets.bottom : 0);
-    
+    const bottomPadding =
+        Platform.OS === 'ios' ? 24 : Math.max(insets.bottom, 8);
+    const tabBarHeight =
+        baseHeight + (Platform.OS === 'android' ? insets.bottom : 0);
+
     return (
         <Tabs
             screenOptions={{
@@ -46,7 +48,11 @@ export default function TabsLayout() {
                 options={{
                     title: 'Home',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="home" size={size} color={color} />
+                        <MaterialCommunityIcons
+                            name="home"
+                            size={size}
+                            color={color}
+                        />
                     ),
                 }}
             />
@@ -55,7 +61,11 @@ export default function TabsLayout() {
                 options={{
                     title: 'Groups',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="account-group" size={size} color={color} />
+                        <MaterialCommunityIcons
+                            name="account-group"
+                            size={size}
+                            color={color}
+                        />
                     ),
                 }}
             />
@@ -64,7 +74,11 @@ export default function TabsLayout() {
                 options={{
                     title: 'Courses',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="book-open-variant" size={size} color={color} />
+                        <MaterialCommunityIcons
+                            name="book-open-variant"
+                            size={size}
+                            color={color}
+                        />
                     ),
                 }}
             />
@@ -73,7 +87,11 @@ export default function TabsLayout() {
                 options={{
                     title: 'Progress',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="chart-line" size={size} color={color} />
+                        <MaterialCommunityIcons
+                            name="chart-line"
+                            size={size}
+                            color={color}
+                        />
                     ),
                 }}
             />
@@ -82,7 +100,11 @@ export default function TabsLayout() {
                 options={{
                     title: 'Profile',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="account" size={size} color={color} />
+                        <MaterialCommunityIcons
+                            name="account"
+                            size={size}
+                            color={color}
+                        />
                     ),
                 }}
             />
@@ -126,4 +148,3 @@ export default function TabsLayout() {
         </Tabs>
     );
 }
-

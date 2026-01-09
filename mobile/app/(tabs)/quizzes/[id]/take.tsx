@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Appbar } from 'react-native-paper';
@@ -8,7 +7,7 @@ import { designTokens } from '../../../../theme';
 
 export default function QuizTakingScreen() {
     const router = useRouter();
-    
+
     return (
         <ProtectedRoute>
             <View style={styles.container}>
@@ -31,7 +30,12 @@ export default function QuizTakingScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    content: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: designTokens.spacing.xl },
+    content: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: designTokens.spacing.xl,
+    },
     message: { marginBottom: designTokens.spacing.sm },
     subtitle: { opacity: 0.7, textAlign: 'center' },
 });

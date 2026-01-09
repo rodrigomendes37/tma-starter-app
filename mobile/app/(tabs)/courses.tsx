@@ -1,7 +1,13 @@
-import React from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Text, ActivityIndicator, Snackbar, Appbar, useTheme } from 'react-native-paper';
+import {
+    Card,
+    Text,
+    ActivityIndicator,
+    Snackbar,
+    Appbar,
+    useTheme,
+} from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import ProtectedRoute from '../../components/ProtectedRoute';
@@ -27,7 +33,12 @@ export default function CoursesScreen() {
 
     if (isLoading) {
         return (
-            <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.center,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
         );
@@ -35,32 +46,50 @@ export default function CoursesScreen() {
 
     return (
         <ProtectedRoute>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.container,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <Appbar.Header elevated>
-                    <Appbar.Content title="My Courses" titleStyle={styles.headerTitle} />
+                    <Appbar.Content
+                        title="My Courses"
+                        titleStyle={styles.headerTitle}
+                    />
                 </Appbar.Header>
 
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     refreshControl={
-                        <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={() => refetch()}
+                        />
                     }
                 >
                     {courses && courses.length === 0 ? (
                         <Card style={styles.emptyCard} mode="outlined">
                             <Card.Content style={styles.emptyContent}>
-                                <MaterialCommunityIcons 
-                                    name="book-open-variant-outline" 
-                                    size={64} 
-                                    color={theme.colors.onSurfaceVariant} 
+                                <MaterialCommunityIcons
+                                    name="book-open-variant-outline"
+                                    size={64}
+                                    color={theme.colors.onSurfaceVariant}
                                     style={styles.emptyIcon}
                                 />
-                                <Text variant="titleLarge" style={styles.emptyTitle}>
+                                <Text
+                                    variant="titleLarge"
+                                    style={styles.emptyTitle}
+                                >
                                     No Courses Yet
                                 </Text>
-                                <Text variant="bodyMedium" style={styles.emptyText}>
-                                    No courses have been assigned to your groups yet.
+                                <Text
+                                    variant="bodyMedium"
+                                    style={styles.emptyText}
+                                >
+                                    No courses have been assigned to your groups
+                                    yet.
                                 </Text>
                             </Card.Content>
                         </Card>
@@ -70,14 +99,18 @@ export default function CoursesScreen() {
                                 key={course.id}
                                 style={styles.card}
                                 mode="elevated"
-                                onPress={() => router.push(`/(tabs)/courses/${course.id}`)}
+                                onPress={() =>
+                                    router.push(`/(tabs)/courses/${course.id}`)
+                                }
                             >
                                 {course.file_url && (
                                     <Card.Cover
-                                        source={{ 
-                                            uri: course.file_url.startsWith('http') 
-                                                ? course.file_url 
-                                                : `${API_URL}${course.file_url}` 
+                                        source={{
+                                            uri: course.file_url.startsWith(
+                                                'http'
+                                            )
+                                                ? course.file_url
+                                                : `${API_URL}${course.file_url}`,
                                         }}
                                         style={styles.cardCover}
                                     />
@@ -85,24 +118,34 @@ export default function CoursesScreen() {
                                 <Card.Content style={styles.cardContent}>
                                     <View style={styles.cardHeader}>
                                         <View style={styles.cardTitleContainer}>
-                                            <Text variant="titleLarge" style={styles.cardTitle}>
+                                            <Text
+                                                variant="titleLarge"
+                                                style={styles.cardTitle}
+                                            >
                                                 {course.title}
                                             </Text>
-                                            {course.module_count !== undefined && (
+                                            {course.module_count !==
+                                                undefined && (
                                                 <InfoBadge
                                                     icon="book-open-variant"
                                                     text={`${course.module_count} ${course.module_count === 1 ? 'module' : 'modules'}`}
                                                 />
                                             )}
                                         </View>
-                                        <MaterialCommunityIcons 
-                                            name="chevron-right" 
-                                            size={24} 
-                                            color={theme.colors.onSurfaceVariant} 
+                                        <MaterialCommunityIcons
+                                            name="chevron-right"
+                                            size={24}
+                                            color={
+                                                theme.colors.onSurfaceVariant
+                                            }
                                         />
                                     </View>
                                     {course.description && (
-                                        <Text variant="bodyMedium" style={styles.description} numberOfLines={2}>
+                                        <Text
+                                            variant="bodyMedium"
+                                            style={styles.description}
+                                            numberOfLines={2}
+                                        >
                                             {course.description}
                                         </Text>
                                     )}
@@ -111,11 +154,11 @@ export default function CoursesScreen() {
                         ))
                     )}
                 </ScrollView>
-                
+
                 {error && (
-                    <Snackbar 
-                        visible={Boolean(error)} 
-                        onDismiss={() => {}} 
+                    <Snackbar
+                        visible={Boolean(error)}
+                        onDismiss={() => {}}
                         duration={4000}
                         style={styles.snackbar}
                     >
@@ -205,4 +248,3 @@ const styles = StyleSheet.create({
         elevation: 9999,
     },
 });
-

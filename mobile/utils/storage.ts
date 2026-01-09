@@ -43,4 +43,3 @@ export async function removeItem(key: string): Promise<void> {
         console.warn('Error removing item from storage:', error);
     }
 }
-

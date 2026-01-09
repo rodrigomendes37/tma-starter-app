@@ -1,7 +1,13 @@
-import React from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Text, ActivityIndicator, Snackbar, Appbar, useTheme } from 'react-native-paper';
+import {
+    Card,
+    Text,
+    ActivityIndicator,
+    Snackbar,
+    Appbar,
+    useTheme,
+} from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import ProtectedRoute from '../../components/ProtectedRoute';
@@ -26,7 +32,12 @@ export default function GroupsScreen() {
 
     if (isLoading) {
         return (
-            <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.center,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
         );
@@ -34,22 +45,33 @@ export default function GroupsScreen() {
 
     return (
         <ProtectedRoute>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.container,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <Appbar.Header elevated>
-                    <Appbar.Content title="My Groups" titleStyle={styles.headerTitle} />
+                    <Appbar.Content
+                        title="My Groups"
+                        titleStyle={styles.headerTitle}
+                    />
                 </Appbar.Header>
 
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     refreshControl={
-                        <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={() => refetch()}
+                        />
                     }
                 >
                     {error && (
-                        <Snackbar 
-                            visible={Boolean(error)} 
-                            onDismiss={() => {}} 
+                        <Snackbar
+                            visible={Boolean(error)}
+                            onDismiss={() => {}}
                             duration={4000}
                             style={styles.snackbar}
                         >
@@ -60,16 +82,22 @@ export default function GroupsScreen() {
                     {groups && groups.length === 0 ? (
                         <Card style={styles.emptyCard} mode="outlined">
                             <Card.Content style={styles.emptyContent}>
-                                <MaterialCommunityIcons 
-                                    name="account-group-outline" 
-                                    size={64} 
-                                    color={theme.colors.onSurfaceVariant} 
+                                <MaterialCommunityIcons
+                                    name="account-group-outline"
+                                    size={64}
+                                    color={theme.colors.onSurfaceVariant}
                                     style={styles.emptyIcon}
                                 />
-                                <Text variant="titleLarge" style={styles.emptyTitle}>
+                                <Text
+                                    variant="titleLarge"
+                                    style={styles.emptyTitle}
+                                >
                                     No Groups Yet
                                 </Text>
-                                <Text variant="bodyMedium" style={styles.emptyText}>
+                                <Text
+                                    variant="bodyMedium"
+                                    style={styles.emptyText}
+                                >
                                     You are not a member of any groups yet.
                                 </Text>
                             </Card.Content>
@@ -80,23 +108,42 @@ export default function GroupsScreen() {
                                 key={group.id}
                                 style={styles.card}
                                 mode="elevated"
-                                onPress={() => router.push(`/(tabs)/groups/${group.id}`)}
+                                onPress={() =>
+                                    router.push(`/(tabs)/groups/${group.id}`)
+                                }
                             >
                                 <Card.Content style={styles.cardContent}>
                                     <View style={styles.cardHeader}>
                                         <View style={styles.cardHeaderLeft}>
-                                            <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-                                                <MaterialCommunityIcons 
-                                                    name="account-group" 
-                                                    size={24} 
-                                                    color={theme.colors.primary} 
+                                            <View
+                                                style={[
+                                                    styles.iconContainer,
+                                                    {
+                                                        backgroundColor:
+                                                            theme.colors
+                                                                .primaryContainer,
+                                                    },
+                                                ]}
+                                            >
+                                                <MaterialCommunityIcons
+                                                    name="account-group"
+                                                    size={24}
+                                                    color={theme.colors.primary}
                                                 />
                                             </View>
-                                            <View style={styles.cardTitleContainer}>
-                                                <Text variant="titleLarge" style={styles.cardTitle}>
+                                            <View
+                                                style={
+                                                    styles.cardTitleContainer
+                                                }
+                                            >
+                                                <Text
+                                                    variant="titleLarge"
+                                                    style={styles.cardTitle}
+                                                >
                                                     {group.name}
                                                 </Text>
-                                                {group.member_count !== undefined && (
+                                                {group.member_count !==
+                                                    undefined && (
                                                     <InfoBadge
                                                         icon="account"
                                                         text={`${group.member_count} ${group.member_count === 1 ? 'member' : 'members'}`}
@@ -104,14 +151,19 @@ export default function GroupsScreen() {
                                                 )}
                                             </View>
                                         </View>
-                                        <MaterialCommunityIcons 
-                                            name="chevron-right" 
-                                            size={24} 
-                                            color={theme.colors.onSurfaceVariant} 
+                                        <MaterialCommunityIcons
+                                            name="chevron-right"
+                                            size={24}
+                                            color={
+                                                theme.colors.onSurfaceVariant
+                                            }
                                         />
                                     </View>
                                     {group.description && (
-                                        <Text variant="bodyMedium" style={styles.description}>
+                                        <Text
+                                            variant="bodyMedium"
+                                            style={styles.description}
+                                        >
                                             {group.description}
                                         </Text>
                                     )}
@@ -207,4 +259,3 @@ const styles = StyleSheet.create({
         marginBottom: designTokens.spacing.lg,
     },
 });
-

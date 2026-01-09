@@ -60,12 +60,36 @@ export interface Course {
     id: number;
     title: string;
     description?: string | null;
+    file_url?: string | null;
+    module_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Module {
+    module_id: number;
+    module_title: string;
+    module_description?: string | null;
+    module_color?: string | null;
+    ordering: number;
+    course_id: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Post {
+    id: number;
+    title: string;
+    content?: string | null;
+    post_type: string;
+    module_id: number;
+    ordering: number;
     created_at: string;
     updated_at: string;
 }
 
 export interface CourseDetail extends Course {
-    // Note: Modules will be added by students
+    modules?: Module[];
 }
 
 // ============================================================================
@@ -111,4 +135,3 @@ export interface CourseGroup {
 }
 
 // Module, Post, Quiz, and Progress types removed - these will be implemented by students
-

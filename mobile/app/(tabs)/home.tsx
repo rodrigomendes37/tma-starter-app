@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,17 +9,34 @@ export default function HomeScreen() {
     const { user } = useAuth();
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView
+            style={[
+                styles.container,
+                { backgroundColor: theme.colors.background },
+            ]}
+        >
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.content}>
                     <View style={styles.header}>
-                        <Text variant="headlineLarge" style={[styles.title, { color: theme.colors.primary }]}>
+                        <Text
+                            variant="headlineLarge"
+                            style={[
+                                styles.title,
+                                { color: theme.colors.primary },
+                            ]}
+                        >
                             Three Moves Ahead
                         </Text>
-                        <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+                        <Text
+                            variant="bodyLarge"
+                            style={[
+                                styles.subtitle,
+                                { color: theme.colors.onSurfaceVariant },
+                            ]}
+                        >
                             Some tagline here.
                         </Text>
                     </View>
@@ -35,8 +51,15 @@ export default function HomeScreen() {
 
                     {user && (
                         <View style={styles.welcomeSection}>
-                            <Text variant="titleMedium" style={[styles.welcomeText, { color: theme.colors.onSurface }]}>
-                                Welcome back, {user.first_name || user.username}!
+                            <Text
+                                variant="titleMedium"
+                                style={[
+                                    styles.welcomeText,
+                                    { color: theme.colors.onSurface },
+                                ]}
+                            >
+                                Welcome back, {user.first_name || user.username}
+                                !
                             </Text>
                         </View>
                     )}
@@ -97,4 +120,3 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
 });
-

@@ -29,4 +29,3 @@ export async function getCurrentUser(): Promise<User> {
     const response = await apiClient.get<User>('/api/auth/me');
     return response.data;
 }
-

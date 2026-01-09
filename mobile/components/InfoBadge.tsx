@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Chip, useTheme } from 'react-native-paper';
 import { designTokens } from '../theme';
@@ -42,4 +41,3 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
 });
-

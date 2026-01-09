@@ -1,11 +1,16 @@
-import React from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Text, ActivityIndicator, Chip, Snackbar, Appbar } from 'react-native-paper';
+import {
+    Card,
+    Text,
+    ActivityIndicator,
+    Snackbar,
+    Appbar,
+} from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 import { getCourseDetail } from '../../../services/courses';
-import { CourseDetail } from '../../../types';
+import { CourseDetail, Module } from '../../../types';
 import { designTokens } from '../../../theme';
 
 export default function CourseDetailScreen() {
@@ -43,12 +48,19 @@ export default function CourseDetailScreen() {
 
                 <ScrollView
                     refreshControl={
-                        <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={() => refetch()}
+                        />
                     }
                 >
                     <View style={styles.content}>
                         {error && (
-                            <Snackbar visible={Boolean(error)} onDismiss={() => {}} duration={4000}>
+                            <Snackbar
+                                visible={Boolean(error)}
+                                onDismiss={() => {}}
+                                duration={4000}
+                            >
                                 Error loading course. Please try again.
                             </Snackbar>
                         )}
@@ -58,58 +70,112 @@ export default function CourseDetailScreen() {
                                 {course.description && (
                                     <Card style={styles.card}>
                                         <Card.Content>
-                                            <Text variant="bodyLarge">{course.description}</Text>
+                                            <Text variant="bodyLarge">
+                                                {course.description}
+                                            </Text>
                                         </Card.Content>
                                     </Card>
                                 )}
 
-                                <Text variant="titleLarge" style={styles.sectionTitle}>
+                                <Text
+                                    variant="titleLarge"
+                                    style={styles.sectionTitle}
+                                >
                                     Modules
                                 </Text>
 
-                                {course.modules && course.modules.length === 0 ? (
+                                {!course.modules ||
+                                course.modules.length === 0 ? (
                                     <Card style={styles.card} mode="outlined">
-                                        <Card.Content style={{ padding: designTokens.spacing.xxl, alignItems: 'center' }}>
-                                            <Text variant="bodyMedium" style={{ opacity: 0.7 }}>
+                                        <Card.Content
+                                            style={{
+                                                padding:
+                                                    designTokens.spacing.xxl,
+                                                alignItems: 'center',
+                                            }}
+                                        >
+                                            <Text
+                                                variant="bodyMedium"
+                                                style={{ opacity: 0.7 }}
+                                            >
                                                 No modules in this course.
                                             </Text>
                                         </Card.Content>
                                     </Card>
                                 ) : (
                                     course.modules
-                                        .sort((a, b) => a.ordering - b.ordering)
-                                        .map((module) => (
+                                        .sort(
+                                            (a: Module, b: Module) =>
+                                                a.ordering - b.ordering
+                                        )
+                                        .map((module: Module) => (
                                             <Card
                                                 key={module.module_id}
                                                 style={styles.card}
                                                 mode="elevated"
                                                 onPress={() =>
-                                                    router.push(`/(tabs)/modules/${module.module_id}`)
+                                                    router.push(
+                                                        `/(tabs)/modules/${module.module_id}`
+                                                    )
                                                 }
                                             >
-                                                <Card.Content style={{ padding: designTokens.spacing.xl }}>
-                                                    <View style={styles.moduleHeader}>
-                                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                <Card.Content
+                                                    style={{
+                                                        padding:
+                                                            designTokens.spacing
+                                                                .xl,
+                                                    }}
+                                                >
+                                                    <View
+                                                        style={
+                                                            styles.moduleHeader
+                                                        }
+                                                    >
+                                                        <View
+                                                            style={{
+                                                                flexDirection:
+                                                                    'row',
+                                                                alignItems:
+                                                                    'center',
+                                                                flex: 1,
+                                                            }}
+                                                        >
                                                             {module.module_color && (
                                                                 <View
                                                                     style={[
                                                                         styles.colorIndicator,
-                                                                        { backgroundColor: module.module_color },
+                                                                        {
+                                                                            backgroundColor:
+                                                                                module.module_color,
+                                                                        },
                                                                     ]}
                                                                 />
                                                             )}
-                                                            <Text variant="titleMedium" style={{ fontWeight: '600', flex: 1 }}>
-                                                                {module.module_title}
+                                                            <Text
+                                                                variant="titleMedium"
+                                                                style={{
+                                                                    fontWeight:
+                                                                        '600',
+                                                                    flex: 1,
+                                                                }}
+                                                            >
+                                                                {
+                                                                    module.module_title
+                                                                }
                                                             </Text>
                                                         </View>
                                                     </View>
                                                     {module.module_description && (
                                                         <Text
                                                             variant="bodyMedium"
-                                                            style={styles.description}
+                                                            style={
+                                                                styles.description
+                                                            }
                                                             numberOfLines={2}
                                                         >
-                                                            {module.module_description}
+                                                            {
+                                                                module.module_description
+                                                            }
                                                         </Text>
                                                     )}
                                                 </Card.Content>
@@ -165,4 +231,3 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 });
-

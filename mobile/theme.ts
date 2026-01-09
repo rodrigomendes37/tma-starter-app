@@ -108,19 +108,23 @@ export const designTokens = {
 const fontConfig = {
     web: {
         regular: {
-            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+            fontFamily:
+                'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
             fontWeight: '400' as const,
         },
         medium: {
-            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+            fontFamily:
+                'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
             fontWeight: '500' as const,
         },
         light: {
-            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+            fontFamily:
+                'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
             fontWeight: '300' as const,
         },
         thin: {
-            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+            fontFamily:
+                'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
             fontWeight: '100' as const,
         },
     },
@@ -164,6 +168,7 @@ const fontConfig = {
 
 export const appTheme: MD3Theme = {
     ...MD3LightTheme,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fonts: configureFonts({ config: fontConfig as any }),
     colors: {
         ...MD3LightTheme.colors,
@@ -207,4 +212,3 @@ export const appTheme: MD3Theme = {
 };
 
 export default appTheme;
-

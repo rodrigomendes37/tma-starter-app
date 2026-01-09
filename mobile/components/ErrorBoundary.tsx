@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { designTokens } from '../theme';
 import { Text, Button } from 'react-native-paper';
@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
         console.error('Error info:', errorInfo);
         console.error('Error stack:', error.stack);
         console.error('Component stack:', errorInfo.componentStack);
-        
+
         this.setState({
             error,
             errorInfo,
@@ -47,7 +47,10 @@ export class ErrorBoundary extends Component<Props, State> {
         if (this.state.hasError) {
             return (
                 <View style={styles.container}>
-                    <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+                    <ScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={styles.content}
+                    >
                         <Text variant="headlineSmall" style={styles.title}>
                             Something went wrong
                         </Text>
@@ -56,20 +59,32 @@ export class ErrorBoundary extends Component<Props, State> {
                         </Text>
                         {this.state.error?.stack && (
                             <View style={styles.stackContainer}>
-                                <Text variant="labelLarge" style={styles.stackTitle}>
+                                <Text
+                                    variant="labelLarge"
+                                    style={styles.stackTitle}
+                                >
                                     Stack Trace:
                                 </Text>
-                                <Text variant="bodySmall" style={styles.stackText}>
+                                <Text
+                                    variant="bodySmall"
+                                    style={styles.stackText}
+                                >
                                     {this.state.error.stack}
                                 </Text>
                             </View>
                         )}
                         {this.state.errorInfo?.componentStack && (
                             <View style={styles.stackContainer}>
-                                <Text variant="labelLarge" style={styles.stackTitle}>
+                                <Text
+                                    variant="labelLarge"
+                                    style={styles.stackTitle}
+                                >
                                     Component Stack:
                                 </Text>
-                                <Text variant="bodySmall" style={styles.stackText}>
+                                <Text
+                                    variant="bodySmall"
+                                    style={styles.stackText}
+                                >
                                     {this.state.errorInfo.componentStack}
                                 </Text>
                             </View>
@@ -133,4 +148,3 @@ const styles = StyleSheet.create({
         marginTop: designTokens.spacing.lg,
     },
 });
-

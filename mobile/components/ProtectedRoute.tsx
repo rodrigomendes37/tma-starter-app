@@ -8,7 +8,10 @@ interface ProtectedRouteProps {
     requireRole?: 'user' | 'admin';
 }
 
-export default function ProtectedRoute({ children, requireRole = 'user' }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+    children,
+    requireRole = 'user',
+}: ProtectedRouteProps) {
     const { user, loading } = useAuth();
     const router = useRouter();
 
@@ -19,7 +22,9 @@ export default function ProtectedRoute({ children, requireRole = 'user' }: Prote
             const timer = setTimeout(() => {
                 if (!user) {
                     if (__DEV__) {
-                        console.log('ProtectedRoute: No user, redirecting to login');
+                        console.log(
+                            'ProtectedRoute: No user, redirecting to login'
+                        );
                     }
                     router.replace('/(auth)/login');
                 }
@@ -56,4 +61,3 @@ export default function ProtectedRoute({ children, requireRole = 'user' }: Prote
 
     return <>{children}</>;
 }
-

@@ -10,7 +10,9 @@ export async function getUserCourses(): Promise<Course[]> {
 }
 
 export async function getCourseDetail(courseId: number): Promise<CourseDetail> {
-    const response = await apiClient.get<CourseDetail>(`/api/courses/${courseId}`);
+    const response = await apiClient.get<CourseDetail>(
+        `/api/courses/${courseId}`
+    );
     return response.data;
 }
 
@@ -19,7 +21,9 @@ export async function getModuleDetail(moduleId: number): Promise<Module> {
         if (__DEV__) {
             console.log(`Fetching module detail for module ID: ${moduleId}`);
         }
-        const response = await apiClient.get<Module>(`/api/modules/${moduleId}`);
+        const response = await apiClient.get<Module>(
+            `/api/modules/${moduleId}`
+        );
         if (__DEV__) {
             console.log('Module detail response:', response.data);
         }
@@ -41,9 +45,13 @@ export async function getModulePosts(moduleId: number): Promise<Post[]> {
         if (__DEV__) {
             console.log(`Fetching posts for module ID: ${moduleId}`);
         }
-        const response = await apiClient.get<Post[]>(`/api/posts?module_id=${moduleId}`);
+        const response = await apiClient.get<Post[]>(
+            `/api/posts?module_id=${moduleId}`
+        );
         if (__DEV__) {
-            console.log(`Found ${response.data.length} posts for module ${moduleId}`);
+            console.log(
+                `Found ${response.data.length} posts for module ${moduleId}`
+            );
         }
         return response.data;
     } catch (error) {
@@ -57,4 +65,3 @@ export async function getModulePosts(moduleId: number): Promise<Post[]> {
         throw error;
     }
 }
-

@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card, Text, Appbar, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -10,9 +9,17 @@ export default function ProgressScreen() {
 
     return (
         <ProtectedRoute>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.container,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <Appbar.Header elevated>
-                    <Appbar.Content title="My Progress" titleStyle={styles.headerTitle} />
+                    <Appbar.Content
+                        title="My Progress"
+                        titleStyle={styles.headerTitle}
+                    />
                 </Appbar.Header>
 
                 <ScrollView
@@ -21,13 +28,16 @@ export default function ProgressScreen() {
                 >
                     <Card style={styles.emptyCard} mode="outlined">
                         <Card.Content style={styles.emptyContent}>
-                            <MaterialCommunityIcons 
-                                name="chart-line" 
-                                size={64} 
-                                color={theme.colors.onSurfaceVariant} 
+                            <MaterialCommunityIcons
+                                name="chart-line"
+                                size={64}
+                                color={theme.colors.onSurfaceVariant}
                                 style={styles.emptyIcon}
                             />
-                            <Text variant="titleLarge" style={styles.emptyTitle}>
+                            <Text
+                                variant="titleLarge"
+                                style={styles.emptyTitle}
+                            >
                                 To Be Implemented
                             </Text>
                             <Text variant="bodyMedium" style={styles.emptyText}>
@@ -77,4 +87,3 @@ const styles = StyleSheet.create({
         opacity: 0.7,
     },
 });
-

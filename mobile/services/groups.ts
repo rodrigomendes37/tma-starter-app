@@ -10,4 +10,3 @@ export async function getGroupDetail(groupId: number): Promise<GroupDetail> {
     const response = await apiClient.get<GroupDetail>(`/api/groups/${groupId}`);
     return response.data;
 }
-

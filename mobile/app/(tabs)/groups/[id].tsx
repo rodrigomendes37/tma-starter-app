@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -8,7 +8,6 @@ import {
     Snackbar,
     Appbar,
     Avatar,
-    Badge,
     useTheme,
 } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -64,7 +63,12 @@ export default function GroupDetailScreen() {
 
     if (isLoading) {
         return (
-            <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.center,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
         );
@@ -72,17 +76,28 @@ export default function GroupDetailScreen() {
 
     return (
         <ProtectedRoute>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.container,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <Appbar.Header elevated>
                     <Appbar.BackAction onPress={() => router.back()} />
-                    <Appbar.Content title={group?.name || 'Group'} titleStyle={styles.headerTitle} />
+                    <Appbar.Content
+                        title={group?.name || 'Group'}
+                        titleStyle={styles.headerTitle}
+                    />
                 </Appbar.Header>
 
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     refreshControl={
-                        <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={() => refetch()}
+                        />
                     }
                 >
                     {error && (
@@ -102,7 +117,16 @@ export default function GroupDetailScreen() {
                             <Card style={styles.card} mode="elevated">
                                 <Card.Content style={styles.cardContent}>
                                     <View style={styles.groupHeader}>
-                                        <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
+                                        <View
+                                            style={[
+                                                styles.iconContainer,
+                                                {
+                                                    backgroundColor:
+                                                        theme.colors
+                                                            .primaryContainer,
+                                                },
+                                            ]}
+                                        >
                                             <MaterialCommunityIcons
                                                 name="account-group"
                                                 size={32}
@@ -110,10 +134,14 @@ export default function GroupDetailScreen() {
                                             />
                                         </View>
                                         <View style={styles.groupInfo}>
-                                            <Text variant="headlineSmall" style={styles.groupName}>
+                                            <Text
+                                                variant="headlineSmall"
+                                                style={styles.groupName}
+                                            >
                                                 {group.name}
                                             </Text>
-                                            {group.member_count !== undefined && (
+                                            {group.member_count !==
+                                                undefined && (
                                                 <InfoBadge
                                                     icon="account"
                                                     text={`${group.member_count} ${group.member_count === 1 ? 'member' : 'members'}`}
@@ -122,7 +150,10 @@ export default function GroupDetailScreen() {
                                         </View>
                                     </View>
                                     {group.description && (
-                                        <Text variant="bodyLarge" style={styles.description}>
+                                        <Text
+                                            variant="bodyLarge"
+                                            style={styles.description}
+                                        >
                                             {group.description}
                                         </Text>
                                     )}
@@ -131,20 +162,34 @@ export default function GroupDetailScreen() {
 
                             {/* Members Section */}
                             <View style={styles.section}>
-                                <Text variant="titleLarge" style={styles.sectionTitle}>
+                                <Text
+                                    variant="titleLarge"
+                                    style={styles.sectionTitle}
+                                >
                                     Members
                                 </Text>
 
                                 {group.members && group.members.length === 0 ? (
-                                    <Card style={styles.emptyCard} mode="outlined">
-                                        <Card.Content style={styles.emptyContent}>
+                                    <Card
+                                        style={styles.emptyCard}
+                                        mode="outlined"
+                                    >
+                                        <Card.Content
+                                            style={styles.emptyContent}
+                                        >
                                             <MaterialCommunityIcons
                                                 name="account-off-outline"
                                                 size={48}
-                                                color={theme.colors.onSurfaceVariant}
+                                                color={
+                                                    theme.colors
+                                                        .onSurfaceVariant
+                                                }
                                                 style={styles.emptyIcon}
                                             />
-                                            <Text variant="bodyMedium" style={styles.emptyText}>
+                                            <Text
+                                                variant="bodyMedium"
+                                                style={styles.emptyText}
+                                            >
                                                 No members in this group yet.
                                             </Text>
                                         </Card.Content>
@@ -157,31 +202,70 @@ export default function GroupDetailScreen() {
                                                 style={styles.memberCard}
                                                 mode="elevated"
                                             >
-                                                <Card.Content style={styles.memberCardContent}>
-                                                    <View style={styles.memberRow}>
+                                                <Card.Content
+                                                    style={
+                                                        styles.memberCardContent
+                                                    }
+                                                >
+                                                    <View
+                                                        style={styles.memberRow}
+                                                    >
                                                         {/* Avatar */}
-                                                        <View style={styles.avatarContainer}>
-                                                            {member.avatar_url && !avatarErrors.has(member.user_id) ? (
+                                                        <View
+                                                            style={
+                                                                styles.avatarContainer
+                                                            }
+                                                        >
+                                                            {member.avatar_url &&
+                                                            !avatarErrors.has(
+                                                                member.user_id
+                                                            ) ? (
                                                                 <Avatar.Image
                                                                     size={64}
-                                                                    source={{ 
+                                                                    source={{
                                                                         uri: member.avatar_url,
                                                                         cache: 'force-cache',
                                                                     }}
-                                                                    onError={(error) => {
-                                                                        if (__DEV__) {
-                                                                            console.log(`Avatar load error for user ${member.user_id}:`, member.avatar_url, error);
+                                                                    onError={(
+                                                                        error
+                                                                    ) => {
+                                                                        if (
+                                                                            __DEV__
+                                                                        ) {
+                                                                            console.log(
+                                                                                `Avatar load error for user ${member.user_id}:`,
+                                                                                member.avatar_url,
+                                                                                error
+                                                                            );
                                                                         }
-                                                                        setAvatarErrors(prev => new Set(prev).add(member.user_id));
+                                                                        setAvatarErrors(
+                                                                            (
+                                                                                prev
+                                                                            ) =>
+                                                                                new Set(
+                                                                                    prev
+                                                                                ).add(
+                                                                                    member.user_id
+                                                                                )
+                                                                        );
                                                                     }}
                                                                     onLoadStart={() => {
-                                                                        if (__DEV__) {
-                                                                            console.log(`Loading avatar for user ${member.user_id}:`, member.avatar_url);
+                                                                        if (
+                                                                            __DEV__
+                                                                        ) {
+                                                                            console.log(
+                                                                                `Loading avatar for user ${member.user_id}:`,
+                                                                                member.avatar_url
+                                                                            );
                                                                         }
                                                                     }}
                                                                     onLoad={() => {
-                                                                        if (__DEV__) {
-                                                                            console.log(`Avatar loaded successfully for user ${member.user_id}`);
+                                                                        if (
+                                                                            __DEV__
+                                                                        ) {
+                                                                            console.log(
+                                                                                `Avatar loaded successfully for user ${member.user_id}`
+                                                                            );
                                                                         }
                                                                     }}
                                                                 />
@@ -189,7 +273,8 @@ export default function GroupDetailScreen() {
                                                                 <Avatar.Text
                                                                     size={64}
                                                                     label={
-                                                                        member.first_name && member.last_name
+                                                                        member.first_name &&
+                                                                        member.last_name
                                                                             ? `${member.first_name[0]}${member.last_name[0]}`
                                                                             : member.username[0].toUpperCase()
                                                                     }
@@ -198,30 +283,60 @@ export default function GroupDetailScreen() {
                                                         </View>
 
                                                         {/* Member Info */}
-                                                        <View style={styles.memberInfo}>
-                                                            <Text variant="titleMedium" style={styles.memberName}>
-                                                                {member.first_name && member.last_name
+                                                        <View
+                                                            style={
+                                                                styles.memberInfo
+                                                            }
+                                                        >
+                                                            <Text
+                                                                variant="titleMedium"
+                                                                style={
+                                                                    styles.memberName
+                                                                }
+                                                            >
+                                                                {member.first_name &&
+                                                                member.last_name
                                                                     ? `${member.first_name} ${member.last_name}`
                                                                     : member.username}
                                                             </Text>
-                                                            <Text variant="bodySmall" style={styles.memberEmail}>
+                                                            <Text
+                                                                variant="bodySmall"
+                                                                style={
+                                                                    styles.memberEmail
+                                                                }
+                                                            >
                                                                 {member.email}
                                                             </Text>
                                                             {member.user_role && (
                                                                 <View
                                                                     style={[
                                                                         styles.roleBadge,
-                                                                        { backgroundColor: getRoleBadgeColor(member.user_role) },
+                                                                        {
+                                                                            backgroundColor:
+                                                                                getRoleBadgeColor(
+                                                                                    member.user_role
+                                                                                ),
+                                                                        },
                                                                     ]}
                                                                 >
                                                                     <Text
                                                                         style={[
                                                                             styles.roleBadgeText,
-                                                                            { color: getRoleBadgeTextColor(member.user_role) },
+                                                                            {
+                                                                                color: getRoleBadgeTextColor(
+                                                                                    member.user_role
+                                                                                ),
+                                                                            },
                                                                         ]}
                                                                     >
-                                                                        {member.user_role.charAt(0).toUpperCase() +
-                                                                         member.user_role.slice(1)}
+                                                                        {member.user_role
+                                                                            .charAt(
+                                                                                0
+                                                                            )
+                                                                            .toUpperCase() +
+                                                                            member.user_role.slice(
+                                                                                1
+                                                                            )}
                                                                     </Text>
                                                                 </View>
                                                             )}
@@ -363,4 +478,3 @@ const styles = StyleSheet.create({
         marginBottom: designTokens.spacing.lg,
     },
 });
-

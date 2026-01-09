@@ -93,9 +93,17 @@ export default function ProfileScreen() {
 
     return (
         <ProtectedRoute>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View
+                style={[
+                    styles.container,
+                    { backgroundColor: theme.colors.background },
+                ]}
+            >
                 <Appbar.Header elevated>
-                    <Appbar.Content title="Profile" titleStyle={styles.headerTitle} />
+                    <Appbar.Content
+                        title="Profile"
+                        titleStyle={styles.headerTitle}
+                    />
                     <Appbar.Action
                         icon="pencil"
                         onPress={openEditModal}
@@ -112,11 +120,24 @@ export default function ProfileScreen() {
                             <View style={styles.avatarContainer}>
                                 <Avatar.Text
                                     size={80}
-                                    label={user?.username?.charAt(0).toUpperCase() || 'U'}
-                                    style={[styles.avatar, { backgroundColor: theme.colors.primary }]}
+                                    label={
+                                        user?.username
+                                            ?.charAt(0)
+                                            .toUpperCase() || 'U'
+                                    }
+                                    style={[
+                                        styles.avatar,
+                                        {
+                                            backgroundColor:
+                                                theme.colors.primary,
+                                        },
+                                    ]}
                                 />
                             </View>
-                            <Text variant="headlineSmall" style={styles.username}>
+                            <Text
+                                variant="headlineSmall"
+                                style={styles.username}
+                            >
                                 {user?.username || 'User'}
                             </Text>
                             {user?.email && (
@@ -127,12 +148,22 @@ export default function ProfileScreen() {
                             {user?.role && (
                                 <View style={styles.roleContainer}>
                                     <MaterialCommunityIcons
-                                        name={user.role.name === 'admin' ? 'shield-account' : 'account'}
+                                        name={
+                                            user.role.name === 'admin'
+                                                ? 'shield-account'
+                                                : 'account'
+                                        }
                                         size={16}
                                         color={theme.colors.primary}
                                     />
-                                    <Text variant="bodySmall" style={styles.role}>
-                                        {user.role.name.charAt(0).toUpperCase() + user.role.name.slice(1)}
+                                    <Text
+                                        variant="bodySmall"
+                                        style={styles.role}
+                                    >
+                                        {user.role.name
+                                            .charAt(0)
+                                            .toUpperCase() +
+                                            user.role.name.slice(1)}
                                     </Text>
                                 </View>
                             )}
@@ -141,26 +172,41 @@ export default function ProfileScreen() {
 
                     <Card style={styles.card} mode="elevated">
                         <Card.Content>
-                            <Text variant="titleMedium" style={styles.sectionTitle}>
+                            <Text
+                                variant="titleMedium"
+                                style={styles.sectionTitle}
+                            >
                                 Account Information
                             </Text>
                             <Divider style={styles.divider} />
                             {user?.first_name && user?.last_name && (
                                 <View style={styles.infoRow}>
-                                    <Text variant="bodyMedium" style={styles.infoLabel}>
+                                    <Text
+                                        variant="bodyMedium"
+                                        style={styles.infoLabel}
+                                    >
                                         Name:
                                     </Text>
-                                    <Text variant="bodyMedium" style={styles.infoValue}>
+                                    <Text
+                                        variant="bodyMedium"
+                                        style={styles.infoValue}
+                                    >
                                         {user.first_name} {user.last_name}
                                     </Text>
                                 </View>
                             )}
                             {user?.email && (
                                 <View style={styles.infoRow}>
-                                    <Text variant="bodyMedium" style={styles.infoLabel}>
+                                    <Text
+                                        variant="bodyMedium"
+                                        style={styles.infoLabel}
+                                    >
                                         Email:
                                     </Text>
-                                    <Text variant="bodyMedium" style={styles.infoValue}>
+                                    <Text
+                                        variant="bodyMedium"
+                                        style={styles.infoValue}
+                                    >
                                         {user.email}
                                     </Text>
                                 </View>
@@ -191,7 +237,10 @@ export default function ProfileScreen() {
                         ]}
                     >
                         <View style={styles.modalHeader}>
-                            <Text variant="headlineSmall" style={styles.modalTitle}>
+                            <Text
+                                variant="headlineSmall"
+                                style={styles.modalTitle}
+                            >
                                 Edit Profile
                             </Text>
                         </View>

@@ -24,9 +24,10 @@ export default function Index() {
 
     // Show loading indicator while checking auth
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        >
             <ActivityIndicator size="large" color={designTokens.app.primary} />
         </View>
     );
 }
-

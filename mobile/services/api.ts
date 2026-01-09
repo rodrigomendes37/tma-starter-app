@@ -3,7 +3,7 @@ import { getItem, removeItem } from '../utils/storage';
 
 /**
  * Get the correct API URL based on platform
- * 
+ *
  * Priority:
  * 1. If EXPO_PUBLIC_API_URL is set to an IP address (not localhost), use it for ALL platforms
  *    - This works for physical iOS and Android devices
@@ -11,21 +11,25 @@ import { getItem, removeItem } from '../utils/storage';
  *    - Android emulator: 10.0.2.2 (special IP that maps to host's localhost)
  *    - iOS simulator: localhost (works directly)
  *    - Web: localhost
- * 
+ *
  * For physical devices, set EXPO_PUBLIC_API_URL in mobile/.env:
  *   EXPO_PUBLIC_API_URL=http://YOUR_COMPUTER_IP:8000
- * 
+ *
  * Find your IP: Run ./scripts/find-ip.sh or check System Preferences → Network
  */
 function getApiUrl(): string {
     const envUrl = process.env.EXPO_PUBLIC_API_URL;
-    
+
     // Priority 1: If EXPO_PUBLIC_API_URL is set to an IP (not localhost),
     // use it for ALL platforms (iOS, Android, web) - this is for physical devices
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    if (
+        envUrl &&
+        !envUrl.includes('localhost') &&
+        !envUrl.includes('127.0.0.1')
+    ) {
         return envUrl;
     }
-    
+
     // Priority 2: Platform-specific defaults for emulators/simulators
     if (Platform.OS === 'android') {
         // Android emulator: Use 10.0.2.2 to access host machine's localhost
@@ -57,14 +61,18 @@ if (__DEV__) {
     console.log('═══════════════════════════════════════');
     console.log('Platform:', Platform.OS);
     console.log('API URL:', API_URL);
-    console.log('EXPO_PUBLIC_API_URL:', process.env.EXPO_PUBLIC_API_URL || 'Not set (using default)');
+    console.log(
+        'EXPO_PUBLIC_API_URL:',
+        process.env.EXPO_PUBLIC_API_URL || 'Not set (using default)'
+    );
     console.log('═══════════════════════════════════════');
-    
+
     // Check if this is a physical device scenario
-    const isPhysicalDevice = Platform.OS !== 'web' && 
-                             (API_URL.includes('10.0.2.2') === false && 
-                              API_URL.includes('localhost') === false);
-    
+    const isPhysicalDevice =
+        Platform.OS !== 'web' &&
+        API_URL.includes('10.0.2.2') === false &&
+        API_URL.includes('localhost') === false;
+
     if (isPhysicalDevice) {
         console.log('✅ Physical device detected - using IP address');
         console.log('💡 Test connection: Open this URL in your phone browser:');
@@ -77,8 +85,11 @@ if (__DEV__) {
     } else if (Platform.OS === 'web') {
         console.log('✅ Web platform detected');
     }
-    
-    if (!process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL.includes('localhost')) {
+
+    if (
+        !process.env.EXPO_PUBLIC_API_URL ||
+        process.env.EXPO_PUBLIC_API_URL.includes('localhost')
+    ) {
         if (Platform.OS !== 'web') {
             console.log('⚠️  WARNING: Using emulator/simulator defaults');
             console.log('💡 For physical devices, create mobile/.env with:');
@@ -125,7 +136,7 @@ async function fetchWithTimeout(
 
     try {
         const response = await fetch(url, {
-            ...options,
+            ...fetchOptions,
             signal: controller.signal,
         });
         clearTimeout(timeoutId);
@@ -172,7 +183,7 @@ async function apiRequest<T>(
         if (__DEV__) {
             console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
         }
-        
+
         const response = await fetchWithTimeout(url, {
             ...options,
             headers,
@@ -180,7 +191,9 @@ async function apiRequest<T>(
         });
 
         if (__DEV__) {
-            console.log(`📡 API Response: ${response.status} ${response.statusText}`);
+            console.log(
+                `📡 API Response: ${response.status} ${response.statusText}`
+            );
         }
 
         // Handle 401 Unauthorized - clear token
@@ -198,11 +211,11 @@ async function apiRequest<T>(
             } catch {
                 errorData = await response.text();
             }
-            
+
             if (__DEV__) {
                 console.error('❌ API Error:', response.status, errorData);
             }
-            
+
             throw new ApiError(
                 `Request failed: ${response.statusText}`,
                 response.status,
@@ -217,7 +230,10 @@ async function apiRequest<T>(
         // Enhanced error logging for connection issues
         if (__DEV__) {
             if (error instanceof Error) {
-                if (error.message.includes('timeout') || error.message.includes('timed out')) {
+                if (
+                    error.message.includes('timeout') ||
+                    error.message.includes('timed out')
+                ) {
                     console.error('⏱️  CONNECTION TIMEOUT');
                     console.error('This usually means:');
                     console.error(`  1. Cannot reach ${API_URL}`);
@@ -225,17 +241,27 @@ async function apiRequest<T>(
                     console.error('  3. Wrong IP address in .env file');
                     console.error('  4. Firewall blocking port 8000');
                     console.error('  5. Phone and computer not on same WiFi');
-                } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                } else if (
+                    error.message.includes('Failed to fetch') ||
+                    error.message.includes('Network')
+                ) {
                     console.error('🌐 NETWORK ERROR');
                     console.error('This usually means:');
                     console.error(`  1. Cannot connect to ${API_URL}`);
-                    console.error('  2. Check your .env file has the correct IP');
-                    console.error('  3. Test in phone browser:', `${API_URL}/api/health`);
-                    console.error('  4. Ensure backend is running on port 8000');
+                    console.error(
+                        '  2. Check your .env file has the correct IP'
+                    );
+                    console.error(
+                        '  3. Test in phone browser:',
+                        `${API_URL}/api/health`
+                    );
+                    console.error(
+                        '  4. Ensure backend is running on port 8000'
+                    );
                 }
             }
         }
-        
+
         // Re-throw ApiError as-is
         if (error instanceof ApiError) {
             throw error;

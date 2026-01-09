@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -14,17 +13,34 @@ export default function HomeScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView
+            style={[
+                styles.container,
+                { backgroundColor: theme.colors.background },
+            ]}
+        >
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.content}>
                     <View style={styles.header}>
-                        <Text variant="headlineLarge" style={[styles.title, { color: theme.colors.primary }]}>
+                        <Text
+                            variant="headlineLarge"
+                            style={[
+                                styles.title,
+                                { color: theme.colors.primary },
+                            ]}
+                        >
                             Three Moves Ahead
                         </Text>
-                        <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+                        <Text
+                            variant="bodyLarge"
+                            style={[
+                                styles.subtitle,
+                                { color: theme.colors.onSurfaceVariant },
+                            ]}
+                        >
                             Some tagline here.
                         </Text>
                     </View>
@@ -108,4 +124,3 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 });
-

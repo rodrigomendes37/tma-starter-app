@@ -1,5 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useRef } from 'react';
+import {
+    View,
+    StyleSheet,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+} from 'react-native';
 import { TextInput, Button, Text, Snackbar } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
 import { designTokens } from '../../theme';
@@ -10,7 +16,7 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
-    const passwordInputRef = useRef<any>(null);
+    const passwordInputRef = useRef<TextInput>(null);
     const { login } = useAuth();
 
     const handleLogin = async () => {
@@ -24,8 +30,12 @@ export default function LoginScreen() {
 
         try {
             await login(username, password);
-        } catch (err: any) {
-            setError(err.message || 'Login failed. Please try again.');
+        } catch (err: unknown) {
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : 'Login failed. Please try again.';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -57,7 +67,9 @@ export default function LoginScreen() {
                             autoCapitalize="none"
                             disabled={loading}
                             returnKeyType="next"
-                            onSubmitEditing={() => passwordInputRef.current?.focus()}
+                            onSubmitEditing={() =>
+                                passwordInputRef.current?.focus()
+                            }
                             blurOnSubmit={false}
                             left={<TextInput.Icon icon="account" />}
                         />
@@ -79,8 +91,10 @@ export default function LoginScreen() {
                             left={<TextInput.Icon icon="lock" />}
                             right={
                                 <TextInput.Icon
-                                    icon={showPassword ? "eye-off" : "eye"}
-                                    onPress={() => setShowPassword(!showPassword)}
+                                    icon={showPassword ? 'eye-off' : 'eye'}
+                                    onPress={() =>
+                                        setShowPassword(!showPassword)
+                                    }
                                     forceTextInputFocus={false}
                                 />
                             }
@@ -166,4 +180,3 @@ const styles = StyleSheet.create({
         marginBottom: designTokens.spacing.lg,
     },
 });
-

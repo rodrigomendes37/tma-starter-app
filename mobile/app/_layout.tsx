@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 if (__DEV__) {
     // Log all unhandled errors
     const originalError = console.error;
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
         originalError.apply(console, args);
         // Log full error details
         if (args[0] instanceof Error) {
@@ -30,10 +30,23 @@ if (__DEV__) {
 
     // Log unhandled promise rejections
     if (typeof global !== 'undefined') {
-        const originalUnhandledRejection = (global as any).onunhandledrejection;
-        (global as any).onunhandledrejection = (event: any) => {
+        type UnhandledRejectionHandler =
+            | ((event: PromiseRejectionEvent) => void)
+            | null;
+        const originalUnhandledRejection = (
+            global as {
+                onunhandledrejection?: UnhandledRejectionHandler;
+            }
+        ).onunhandledrejection;
+        (
+            global as {
+                onunhandledrejection?: UnhandledRejectionHandler;
+            }
+        ).onunhandledrejection = (event: PromiseRejectionEvent) => {
             console.error('Unhandled Promise Rejection:', event.reason);
-            console.error('Stack:', event.reason?.stack);
+            if (event.reason instanceof Error) {
+                console.error('Stack:', event.reason.stack);
+            }
             if (originalUnhandledRejection) {
                 originalUnhandledRejection(event);
             }
@@ -48,7 +61,9 @@ export default function RootLayout() {
                 <PaperProvider theme={appTheme}>
                     <QueryClientProvider client={queryClient}>
                         <AuthProvider>
-                            <Stack screenOptions={{ headerShown: Boolean(false) }}>
+                            <Stack
+                                screenOptions={{ headerShown: Boolean(false) }}
+                            >
                                 <Stack.Screen name="index" />
                                 <Stack.Screen name="(auth)/home" />
                                 <Stack.Screen name="(auth)/login" />
@@ -61,4 +76,3 @@ export default function RootLayout() {
         </SafeAreaProvider>
     );
 }
-

@@ -149,6 +149,69 @@ The app connects to the FastAPI backend using the following endpoints:
 
 This mobile app is designed for users with the "user" role only. Admin users are blocked from accessing the app.
 
+## Testing
+
+This project uses **Jest** for unit testing, focusing on pure utility functions that are easy to test and catch real bugs.
+
+### Philosophy
+
+- **Test pure functions first** - Easy to write, fast to run, catch real bugs
+- **Minimal but extensible** - Start small, grow as needed
+- **Real software focus** - Tests that actually catch bugs, not just examples
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Test Structure
+
+Tests are located in `__tests__` directories next to the code they test:
+
+```
+mobile/
+├── utils/
+│   ├── __tests__/
+│   │   └── typeGuards.test.ts    # Tests for toBoolean() and toNumber()
+│   └── typeGuards.ts
+```
+
+### What We Test
+
+- **Pure utility functions** - Type conversion, data transformation
+- **No component testing** - React Native component testing is more complex and deferred for now
+
+### What We Don't Test (For Now)
+
+- React Native components
+- Context providers
+- API integration (use backend tests for that)
+- E2E flows
+
+### Adding New Tests
+
+1. Create a `__tests__` directory next to your utility file
+2. Create a test file: `myUtility.test.ts`
+3. Write tests using Jest's `describe` and `it` blocks
+4. Run `npm test` to verify
+
+Example:
+```typescript
+import { describe, it, expect } from '@jest/globals';
+import { myFunction } from '../myUtility';
+
+describe('myUtility', () => {
+    it('should handle case X', () => {
+        expect(myFunction('input')).toBe('expected');
+    });
+});
+```
+
 ## Troubleshooting
 
 ### Metro bundler issues
