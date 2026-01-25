@@ -54,12 +54,18 @@ async def test_get_all_us_courses_with_no_admin_auth(
     # verify the list contains no courses bc lack of auth
     assert data == []
 
+@pytest.mark.asyncio
+async def test_get_course_by_id_requires_auth(client, create_course):
+    """Test GET /api/courses/{course_id} without authenticated"""
+    response = await client.get(f"/api/courses/{create_course.id}")
+    assert response.status_code == 401
+
 
 @pytest.mark.asyncio
 async def test_get_course_by_valid_id(client: AsyncClient, auth_headers, admin_user, create_course):
     """Test GET /api/courses/{course_id} while authenticated"""
     response = await client.get(
-        "/api/courses/1",
+        f"/api/courses/{create_course.id}",
         headers=auth_headers,
     )
     assert response.status_code == 200
@@ -67,11 +73,21 @@ async def test_get_course_by_valid_id(client: AsyncClient, auth_headers, admin_u
     # verify the data is returned as a dict
     assert isinstance(data, dict)
 
-    # verify the created course contains the required fields
+    # verify the created course contains the required fields, and the fields are correct for the specific course
     
-    assert "id" in data
-    assert "title" in data
-    assert "description" in data
+    assert data["id"] == create_course.id
+    assert data["title"] == create_course.title
+    assert data["description"] == create_course.description
+    assert data["modules"] == []
     assert "created_at" in data
     assert "updated_at" in data
-    assert "modules" in data
+
+@pytest.mark.asyncio
+async def test_get_course_by_invalid_id(client: AsyncClient, auth_headers, admin_user, create_course):
+    """Test GET /api/courses/{course_id} while authenticated"""
+    response = await client.get(
+        "/api/courses/0",
+        headers=auth_headers,
+    )
+    #test if error code thrown by endpoint is the one expected 
+    assert response.status_code == 404
