@@ -5,7 +5,9 @@ Contract-level tests for the /api/users endpoint
 import pytest
 from httpx import AsyncClient
 
-
+# -------------------
+# Test GET /api/users
+# -------------------
 @pytest.mark.asyncio
 async def test_get_all_users_requires_auth(client: AsyncClient):
     """Test that GET /api/users requires authentication"""
@@ -34,14 +36,17 @@ async def test_get_all_users_with_auth(client: AsyncClient, auth_headers, admin_
     # Verify the admin user is in the list
     admin_usernames = [user["username"] for user in data]
     assert "admin" in admin_usernames
+# End ----------------
 
 
+# ------------------------
+# Test GET /api/users/{id}
+# ------------------------
 @pytest.mark.asyncio
 async def test_get_user_by_id_requires_auth(client: AsyncClient):
     """Test that GET /api/users/{id} requires authentication"""
     response = await client.get("/api/users/1")
     assert response.status_code == 401
-
 
 @pytest.mark.asyncio
 async def test_get_user_by_id_not_found(client: AsyncClient, auth_headers):
@@ -51,7 +56,46 @@ async def test_get_user_by_id_not_found(client: AsyncClient, auth_headers):
     data = response.json()
     assert "not found" in data["detail"].lower()
 
+# Getting 307, I'm not sure if this is something I can check for. Without the final slash
+# it just calls get all users. With it (missing anything after) I get a 307 response
+'''
+@pytest.mark.asyncio
+async def test_get_user_by_id_missing_fields(client: AsyncClient, auth_headers):
+    """Test that GET /api/users/{id} returns 422 for missing required id input"""
+    response = await client.get("/api/users/", headers=auth_headers)
+    assert response.status_code == 422
+'''
 
+@pytest.mark.asyncio
+async def test_get_user_by_id_incorrect_type_fields(client: AsyncClient, auth_headers):
+    """Test that GET /api/users/{id} returns 422 for non-int required id input"""
+    response = await client.get("/api/users/eleven", headers=auth_headers)
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_get_user_by_id_success(client: AsyncClient, auth_headers):
+    """Test that GET /api/users/{id} returns 200 if a user matching the id is found, has all expected fields, and doesn't return the user's password"""
+    response = await client.get("/api/users/1", headers=auth_headers)
+    assert response.status_code == 200
+    user = response.json()
+
+    #  {id: int, role: RoleInUser, email_verified: bool, is_active: bool, created_at: datetime, updated_at: datetime}
+    assert "id" in user
+    assert "role" in user
+    assert "email_verified" in user
+    assert "is_active" in user
+    assert "created_at" in user
+    assert "updated_at" in user
+
+    assert "password" not in user 
+# End ---------------
+
+
+
+
+# --------------------
+# Test POST /api/users
+# --------------------
 @pytest.mark.asyncio
 async def test_create_user_requires_auth(client: AsyncClient):
     """Test that POST /api/users requires authentication"""
@@ -136,3 +180,4 @@ async def test_create_user_duplicate_username(
     assert (
         get_response.json()["email"] == "first@example.com"
     )  # Original email unchanged
+# End ------------------------
