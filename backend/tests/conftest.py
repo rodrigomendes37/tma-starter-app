@@ -122,3 +122,73 @@ async def auth_headers(client, admin_user, test_db):
     # Clean up overrides after test
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(require_admin, None)
+
+
+@pytest.fixture
+async def regular_user(test_db):
+    """
+    Create a regular user (role: "user") for testing
+
+    Use this when you need to test endpoints that should
+    work for any authenticated user, or when testing that
+    non-admin users are denied access to admin-only endpoints.
+    """
+    async with TestSessionLocal() as session:
+        from sqlalchemy.future import select
+        from sqlalchemy.orm import joinedload
+
+        # Get user role
+        result = await session.execute(select(Role).where(Role.name == "user"))
+        user_role = result.scalar_one()
+
+        # Create regular user
+        user = User(
+            username="regular_user",
+            email="user@test.com",
+            hashed_password="$2b$12$dummy",
+            role_id=user_role.id,
+            is_active=True,
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
+        # Load with role relationship
+        result = await session.execute(
+            select(User).where(User.id == user.id).options(joinedload(User.role))
+        )
+        user_with_role = result.scalar_one()
+
+        yield user_with_role
+
+
+@pytest.fixture
+async def user_auth_headers(client, regular_user, test_db):
+    """
+    Get authentication headers for a regular user (non-admin)
+
+    Usage in tests:
+        async def test_user_cannot_create_course(client, user_auth_headers):
+            response = await client.post(
+                "/courses",
+                json={"name": "Test Course"},
+                headers=user_auth_headers
+            )
+            assert response.status_code == 403  # Forbidden
+    """
+    from auth import get_current_active_user, get_current_user
+
+    async def override_get_current_user():
+        return regular_user
+
+    async def override_get_current_active_user():
+        return regular_user
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_current_active_user] = override_get_current_active_user
+
+    yield {"Authorization": "Bearer test-token"}
+
+    # Cleanup
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_current_active_user, None)

@@ -46,10 +46,14 @@ async def test_get_all_users_with_auth(client: AsyncClient, auth_headers, admin_
 # Test GET /api/users/{id}
 # ------------------------
 @pytest.mark.asyncio
-async def test_get_user_by_id_requires_auth(client: AsyncClient):
+async def test_get_user_by_id_requires_auth(client: AsyncClient, user_auth_headers):
     """Test that GET /api/users/{id} requires authentication"""
     response = await client.get("/api/users/1")
     assert response.status_code == 401
+
+    # test with headers that only have user access not admin
+    response = await client.get("/api/users/1", headers=user_auth_headers)
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -95,7 +99,7 @@ async def test_get_user_by_id_success(client: AsyncClient, auth_headers):
 # Test POST /api/users
 # --------------------
 @pytest.mark.asyncio
-async def test_create_user_requires_auth(client: AsyncClient):
+async def test_create_user_requires_auth(client: AsyncClient, user_auth_headers):
     """Test that POST /api/users requires authentication"""
     user_data = {
         "username": "testuser",
@@ -104,6 +108,11 @@ async def test_create_user_requires_auth(client: AsyncClient):
     }
     response = await client.post("/api/users", json=user_data)
     assert response.status_code == 401
+
+    response = await client.post(
+        "/api/users", json=user_data, headers=user_auth_headers
+    )
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -121,7 +130,8 @@ async def test_create_user_success(client: AsyncClient, auth_headers, test_db):
     assert data["username"] == "newuser"
     assert data["email"] == "newuser@example.com"
     assert "id" in data
-    assert "password" not in data  # Password should not be in response
+    assert "password" not in data
+    # Password should not be in response
 
     # Verify the user was actually created by retrieving it through the API
     user_id = data["id"]
@@ -187,13 +197,18 @@ async def test_create_user_duplicate_username(
 # Test PATCh /api/users/{id}
 # --------------------------
 @pytest.mark.asyncio
-async def test_patch_user_by_id_requires_auth(client: AsyncClient):
+async def test_patch_user_by_id_requires_auth(client: AsyncClient, user_auth_headers):
     """Test that PATCH /api/users/{id} requires authentication"""
     profile_data = {
         "first_name": "updatedFirstName",
     }
     response = await client.patch("/api/users/1", json=profile_data)
     assert response.status_code == 401
+
+    response = await client.patch(
+        "/api/users/1", json=profile_data, headers=user_auth_headers
+    )
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -256,6 +271,31 @@ async def test_patch_user_by_id_bad_params_given(client: AsyncClient, auth_heade
         "/api/users/1", headers=auth_headers, json=profile_data
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_empty_string_param(client: AsyncClient, auth_headers):
+    """ "Test that PATCH /api/users/{id}"""
+    profile_data = {
+        "first_name": "",
+        "last_name": "",
+        "child_name": "",
+        "child_sex_assigned_at_birth": "",
+        # "child_dob": "",
+        # # DOB excluded because it will be a type error, and won't
+        # allow me to test for empty string
+        "avatar_url": "",
+    }
+    response = await client.patch(
+        "/api/users/1", headers=auth_headers, json=profile_data
+    )
+    assert response.status_code == 200
+
+    response = await client.get("/api/users/1", headers=auth_headers)
+    user_data = response.json()
+    assert (
+        user_data["first_name"] is None
+    )  # How interesting, it get's saved as None, not ""
 
 
 @pytest.mark.asyncio
@@ -365,12 +405,15 @@ async def test_patch_user_by_id_partial_fields_success(
 # Test DELETE /api/users/{id}
 # --------------------------
 @pytest.mark.asyncio
-async def test_delete_user_by_id_requires_auth(client: AsyncClient):
+async def test_delete_user_by_id_requires_auth(client: AsyncClient, user_auth_headers):
     """Test that DELETE /api/users/{id} requires authentication"""
     response = await client.delete(
         "/api/users/1",
     )
     assert response.status_code == 401
+
+    response = await client.delete("/api/users/1", headers=user_auth_headers)
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -401,23 +444,14 @@ async def test_delete_user_by_id_prevent_delete_self(
 
 
 @pytest.mark.asyncio
-async def test_delete_user_by_id_successful(client: AsyncClient, auth_headers):
+async def test_delete_user_by_id_successful(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that DELETE /api/users/{id} returns 204 when a user is
     deleted and that it persists"""
-    # Add a second user to the DB to test deleting it
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201
-    data = response.json()
-    assert "id" in data
 
-    id_to_delete = data["id"]
-    # Confirm that the new user exists before deletion
+    id_to_delete = regular_user.id
+    # Confirm that the user exists before deletion
     response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
     assert response.status_code == 200
 
@@ -435,33 +469,54 @@ async def test_delete_user_by_id_successful(client: AsyncClient, auth_headers):
     assert response.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_delete_user_by_id_prevent_double_delete(
+    client: AsyncClient, auth_headers, regular_user
+):
+    """Test that DELETE /api/users/{id} returns 404 when trying to delete a
+    user for the second time"""
+    id_to_delete = regular_user.id
+    # Confirm that the new user exists before deletion
+    response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 200
+
+    # I checked above, the admin user is id = 1, so  I can't
+    # delete that one. Deleting new user instead
+    response = await client.delete(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 204  # Verify the deletion code
+
+    # Then try the deletion again
+    response = await client.delete(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 404
+
+
 # End ------------------------
 
 
 # ---------------------------------
 # Test PATCH /api/users/{id}/status
 # ---------------------------------
-# NOTE: Many of the initial tests which test for 404 or 422 failures
-#   use a random int for user_id, because they should fail before
-#   getting to use it, therefore it is okay that I have not validated
-#   that it's a valid id. I do validate this for tests where it matters
-# NOTE 2: I am pretty sure the test DB that's set up ONLY has the admin
-#    user initially. For most tests, I need to first insert a second
-#   user so that the url is valid (I can't use 1, because the admin
-#   can't update itself, and I need to use a valid ID to test other
-#   aspects of the DB)
 @pytest.mark.asyncio
-async def test_patch_user_status_by_id_requires_auth(client: AsyncClient):
+async def test_patch_user_status_by_id_requires_auth(
+    client: AsyncClient, user_auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/status requires authentication"""
-    status_data = {"user_id": 55, "is_active": False}
-    response = await client.patch("/api/users/1/status", json=status_data)
+    status_data = {"user_id": regular_user.id, "is_active": False}
+    response = await client.patch("/api/users/regular_user.id/status", json=status_data)
     assert response.status_code == 401
 
+    response = await client.patch(
+        "/api/users/regular_user.id/status", json=status_data, headers=user_auth_headers
+    )
+    assert response.status_code == 403
+
 
 @pytest.mark.asyncio
-async def test_patch_user_status_by_id_not_found(client: AsyncClient, auth_headers):
+async def test_patch_user_status_by_id_not_found(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/status returns 404 for non-existent user"""
-    status_data = {"user_id": 55, "is_active": False}
+    status_data = {"user_id": regular_user.id, "is_active": False}
     response = await client.patch(
         "/api/users/999999/status", json=status_data, headers=auth_headers
     )
@@ -469,9 +524,11 @@ async def test_patch_user_status_by_id_not_found(client: AsyncClient, auth_heade
 
 
 @pytest.mark.asyncio
-async def test_patch_user_status_by_id_not_int(client: AsyncClient, auth_headers):
+async def test_patch_user_status_by_id_not_int(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/status returns 422 for invalid id in the URL"""
-    status_data = {"user_id": 55, "is_active": False}
+    status_data = {"user_id": regular_user.id, "is_active": False}
     response = await client.patch(
         "/api/users/eleven/status", json=status_data, headers=auth_headers
     )
@@ -479,26 +536,13 @@ async def test_patch_user_status_by_id_not_int(client: AsyncClient, auth_headers
 
 
 @pytest.mark.asyncio
-async def test_patch_user_status_by_id_no_parameters(client: AsyncClient, auth_headers):
+async def test_patch_user_status_by_id_no_parameters(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/status returns 422 because
     no paremeters were given"""
+    id_to_use = regular_user.id
 
-    # From here on, I have to insert a new user to use their ID for
-    # the url
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
-
-    # Actual test
     response = await client.patch(
         f"/api/users/{id_to_use}/status", headers=auth_headers
     )
@@ -507,26 +551,27 @@ async def test_patch_user_status_by_id_no_parameters(client: AsyncClient, auth_h
 
 @pytest.mark.asyncio
 async def test_patch_user_status_by_id_bad_parameters(
-    client: AsyncClient, auth_headers
+    client: AsyncClient, auth_headers, regular_user
 ):
     """Test that PATCH /api/users/{id}/status returns 422 for invalid
     parameter types and empty parameters"""
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
+    id_to_use = regular_user.id
 
-    # Actual tests
     # Empty params
     status_data = {}
+    response = await client.patch(
+        f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers
+    )
+    assert response.status_code == 422
+
+    # Empty String params
+    status_data = {"user_id": "", "is_active": False}
+    response = await client.patch(
+        f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers
+    )
+    assert response.status_code == 422
+
+    status_data = {"user_id": 55, "is_active": ""}
     response = await client.patch(
         f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers
     )
@@ -549,24 +594,12 @@ async def test_patch_user_status_by_id_bad_parameters(
 
 @pytest.mark.asyncio
 async def test_patch_user_status_by_id_convertable_parameters(
-    client: AsyncClient, auth_headers
+    client: AsyncClient, auth_headers, regular_user
 ):
     """Test that PATCH /api/users/{id}/status returns 200 for parameters
     where the types can be converted"""
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
+    id_to_use = regular_user.id
 
-    # Actual tests
     # Permissible type for user_id
     status_data = {"user_id": "2", "is_active": False}
     response = await client.patch(
@@ -598,21 +631,18 @@ async def test_patch_user_status_by_id_prevent_disable_self(
 
 
 @pytest.mark.asyncio
-async def test_patch_user_status_by_id_successful(client: AsyncClient, auth_headers):
+async def test_patch_user_status_by_id_successful(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/status returns 200 for successful
     status update and that the update persists"""
     # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
+    id_to_use = regular_user.id
+
+    # Get the original info for later comparison
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200  # Make sure it was made
     original_data = response.json()
-    assert "id" in original_data
-    id_to_use = original_data["id"]
 
     # Actual test
     status_data = {
@@ -652,27 +682,29 @@ async def test_patch_user_status_by_id_successful(client: AsyncClient, auth_head
 # ---------------------------------
 # Test PATCH /api/users/{id}/role
 # ---------------------------------
-# NOTE: Many of the initial tests which test for 404 or 422 failures
-#   use a random int for user_id, because they should fail before
-#   getting to use it, therefore it is okay that I have not validated
-#   that it's a valid id. I do validate this for tests where it matters
-# NOTE 2: I am pretty sure the test DB that's set up ONLY has the admin
-#   user initially. For most tests, I need to first insert a second
-#   user so that the url is valid (I can't use 1, because the admin
-#   can't update itself, and I need to use a valid ID to test other
-#   aspects of the DB)
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_requires_auth(client: AsyncClient):
+async def test_patch_user_role_by_id_requires_auth(
+    client: AsyncClient, user_auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/role requires authentication"""
-    role_data = {"user_id": 55, "role": "manager"}
-    response = await client.patch("/api/users/1/role", json=role_data)
+    role_data = {"user_id": regular_user.id, "role": "manager"}
+    response = await client.patch(f"/api/users/{regular_user.id}/role", json=role_data)
     assert response.status_code == 401
 
+    response = await client.patch(
+        f"/api/users/{regular_user.id}/role", json=role_data, headers=user_auth_headers
+    )
+    assert (
+        response.status_code == 403
+    )  # Should fail because a regular user doesn't have permission to do this
+
 
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_not_found(client: AsyncClient, auth_headers):
+async def test_patch_user_role_by_id_not_found(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/role returns 404 for non-existent user"""
-    role_data = {"user_id": 55, "role": "manager"}
+    role_data = {"user_id": regular_user.id, "role": "manager"}
     response = await client.patch(
         "/api/users/999999/role", json=role_data, headers=auth_headers
     )
@@ -680,10 +712,12 @@ async def test_patch_user_role_by_id_not_found(client: AsyncClient, auth_headers
 
 
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_not_int(client: AsyncClient, auth_headers):
+async def test_patch_user_role_by_id_not_int(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/role returns 422 for invalid
     id in the URL"""
-    role_data = {"user_id": 55, "role": "manager"}
+    role_data = {"user_id": regular_user.id, "role": "manager"}
     response = await client.patch(
         "/api/users/eleven/role", json=role_data, headers=auth_headers
     )
@@ -691,52 +725,39 @@ async def test_patch_user_role_by_id_not_int(client: AsyncClient, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_no_parameters(client: AsyncClient, auth_headers):
+async def test_patch_user_role_by_id_no_parameters(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/role returns 422 because no
     paremeters were given"""
+    id_to_use = regular_user.id
 
-    # From here on, I have to insert a new user to use their ID for the url
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
-
-    # Actual test
     response = await client.patch(f"/api/users/{id_to_use}/role", headers=auth_headers)
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_bad_parameters(client: AsyncClient, auth_headers):
+async def test_patch_user_role_by_id_bad_parameters(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/role returns 422 for invalid
     parameter types and empty parameters"""
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
+    id_to_use = regular_user.id
 
-    # Actual tests
     # Empty params
     role_data = {}
     response = await client.patch(
         f"/api/users/{id_to_use}/role", headers=auth_headers, json=role_data
     )
     assert response.status_code == 422
+
+    # Empty Strings
+    role_data = {"user_id": "", "role": "manager"}
+    response = await client.patch(
+        f"/api/users/{id_to_use}/role", headers=auth_headers, json=role_data
+    )
+    assert response.status_code == 422
+    # empty role is handled in the _invalid_role function
 
     # bad type for user_id
     role_data = {"user_id": "eleven", "role": "manager"}
@@ -754,20 +775,11 @@ async def test_patch_user_role_by_id_bad_parameters(client: AsyncClient, auth_he
 
 
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_invalid_role(client: AsyncClient, auth_headers):
+async def test_patch_user_role_by_id_invalid_role(
+    client: AsyncClient, auth_headers, regular_user
+):
     """Test that PATCH /api/users/{id}/role returns 400 for invalid role given"""
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
+    id_to_use = regular_user.id
 
     # Actual test
     role_data = {"user_id": id_to_use, "role": "notAdmin"}
@@ -776,28 +788,23 @@ async def test_patch_user_role_by_id_invalid_role(client: AsyncClient, auth_head
     )
     assert response.status_code == 400
 
+    role_data = {"user_id": id_to_use, "role": ""}
+    response = await client.patch(
+        f"/api/users/{id_to_use}/role", headers=auth_headers, json=role_data
+    )
+    assert response.status_code == 400
+
 
 @pytest.mark.asyncio
 async def test_patch_user_role_by_id_convertable_parameters(
-    client: AsyncClient, auth_headers
+    client: AsyncClient, auth_headers, regular_user
 ):
     """Test that PATCH /api/users/{id}/role returns 200 for parameters
     where the types can be converted"""
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    data = response.json()
-    assert "id" in data
-    id_to_use = data["id"]
+    id_to_use = regular_user.id
 
-    # Actual test
     # Permissible type for user_id
-    role_data = {"user_id": "2", "role": "manager"}
+    role_data = {"user_id": id_to_use, "role": "manager"}
     response = await client.patch(
         f"/api/users/{id_to_use}/role", headers=auth_headers, json=role_data
     )
@@ -818,23 +825,18 @@ async def test_patch_user_role_by_id_prevent_change_own_role(
 
 
 @pytest.mark.asyncio
-async def test_patch_user_role_by_id_successful(client: AsyncClient, auth_headers):
+async def test_patch_user_role_to_manager_by_id_successful(
+    client: AsyncClient, auth_headers, regular_user, user_auth_headers
+):
     """Test that PATCH /api/users/{id}/status returns 200 for
     successful status update and that the update persists"""
-    # Add a second user to the DB to test with a correct URL
-    user_data = {
-        "username": "newuser",
-        "email": "newuser@example.com",
-        "password": "password123",
-        "role": "user",
-    }
-    response = await client.post("/api/users", json=user_data, headers=auth_headers)
-    assert response.status_code == 201  # Make sure it was made
-    original_data = response.json()
-    assert "id" in original_data
-    id_to_use = original_data["id"]
+    id_to_use = regular_user.id
 
-    # Actual test
+    # Get the original info for later comparison
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200  # Make sure it was made
+    original_data = response.json()
+
     role_data = {
         "user_id": id_to_use,
         "role": "manager",  # New role from the original one set
@@ -858,5 +860,57 @@ async def test_patch_user_role_by_id_successful(client: AsyncClient, auth_header
     # Then check that the updated info has persisted
     response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
     updated_data = response.json()
+    assert (
+        original_data["role"] != updated_data["role"]
+        and updated_data["role"]["name"] == "manager"
+    )
 
-    assert original_data["role"] != updated_data["role"]
+    # Test they can now make calls to things like GET /api/users/{id}
+    response = await client.get("/api/users/1", headers=user_auth_headers)
+    assert response.status_code == 200  # I guess managers can make this call
+
+
+@pytest.mark.asyncio
+async def test_patch_user_role_to_admin_by_id_successful(
+    client: AsyncClient, auth_headers, regular_user, user_auth_headers
+):
+    """Test that PATCH /api/users/{id}/status returns 200 for
+    successful status update and that the update persists"""
+    id_to_use = regular_user.id
+
+    # Get the original info for later comparison
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200  # Make sure it was made
+    original_data = response.json()
+
+    role_data = {
+        "user_id": id_to_use,
+        "role": "admin",
+    }
+    response = await client.patch(
+        f"/api/users/{id_to_use}/role", headers=auth_headers, json=role_data
+    )
+    assert response.status_code == 200
+    response_data = response.json()
+
+    # Check that the user is returned
+    assert (
+        "id" in response_data
+        and "role" in response_data
+        and "email_verified" in response_data
+        and "is_active" in response_data
+        and "created_at" in response_data
+        and "updated_at" in response_data
+    )
+
+    # Then check that the updated info has persisted
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    updated_data = response.json()
+    assert (
+        original_data["role"] != updated_data["role"]
+        and updated_data["role"]["name"] == "admin"
+    )
+
+    # Test they can now make calls to things like GET /api/users/{id}
+    response = await client.get("/api/users/1", headers=user_auth_headers)
+    assert response.status_code == 200
