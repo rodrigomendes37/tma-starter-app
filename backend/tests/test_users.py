@@ -91,8 +91,6 @@ async def test_get_user_by_id_success(client: AsyncClient, auth_headers):
 # End ---------------
 
 
-
-
 # --------------------
 # Test POST /api/users
 # --------------------
@@ -181,3 +179,113 @@ async def test_create_user_duplicate_username(
         get_response.json()["email"] == "first@example.com"
     )  # Original email unchanged
 # End ------------------------
+
+# --------------------------
+# Test PATCh /api/users/{id}
+# --------------------------
+@pytest.mark.asyncio
+async def test_patch_user_by_id_requires_auth(client: AsyncClient):
+    """Test that PATCH /api/users/{id} requires authentication"""
+    profile_data = {
+        "first_name": "updatedFirstName",
+    }
+    response = await client.patch("/api/users/1", json=profile_data)
+    assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_not_found(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} returns 404 for non-existent user"""
+    profile_data = {
+        "first_name": "updatedFirstName",
+        "LASTNAME": "LastNameShouldNotUpdate", # <-- This field should not be seen
+    }
+    response = await client.patch("/api/users/999999", headers=auth_headers, json=profile_data)
+    assert response.status_code == 404
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_empty_params_success(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} succeeds when given empty parameters, because all params are optional"""
+    profile_data = {}
+    response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
+    assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_no_params_given(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} returns 422 because no paremeters were given"""
+    response = await client.patch("/api/users/1", headers=auth_headers)
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_bad_params_given(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} returns 422 for invalid parameter types"""
+    # Most params are strings. They are not automatically converted to string.
+    profile_data = {
+        "first_name": 391
+    }
+    response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
+    assert response.status_code == 422
+    # Give a bad/un-convertable date value, which should cause 422 error
+    profile_data = {
+        "child_dob": "BAD DATE THERES NO WAY THIS CONVERTS"
+    }
+    response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_all_fields_success(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} returns 200 for successful update of all fields and that the update persists"""
+    # Get previous data for user to store for comparisson
+    response = await client.get("/api/users/1", headers=auth_headers)
+    original_user_data = response.json()
+
+    profile_data = {
+        "first_name": "UpdatedFirstName",
+        "last_name": "UpdatedLastName",
+        "child_name": "UpdatedChildName",
+        "child_sex_assigned_at_birth": "UpdatedChildSexAssignedAtBirth",
+        "child_dob": "2026-01-29",
+        "avatar_url": "UpdatedURL"
+    }
+    response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
+    assert response.status_code == 200  # Check the error code
+    # Then re-retrieve the data to validated it persisted in the DB
+    response = await client.get("/api/users/1", headers=auth_headers)
+    updated_user_data = response.json()
+
+    # Compare each value
+    assert original_user_data["first_name"] != updated_user_data["first_name"] and updated_user_data["first_name"] == profile_data["first_name"]
+    assert original_user_data["last_name"] != updated_user_data["last_name"] and updated_user_data["last_name"] == profile_data["last_name"]
+    assert original_user_data["child_name"] != updated_user_data["child_name"] and updated_user_data["child_name"] == profile_data["child_name"]
+    assert ( original_user_data["child_sex_assigned_at_birth"] != updated_user_data["child_sex_assigned_at_birth"] 
+        and updated_user_data["child_sex_assigned_at_birth"] == profile_data["child_sex_assigned_at_birth"] )
+    assert original_user_data["child_dob"] != updated_user_data["child_dob"] and updated_user_data["child_dob"] == profile_data["child_dob"]
+    assert original_user_data["avatar_url"] != updated_user_data["avatar_url"] and updated_user_data["avatar_url"] == profile_data["avatar_url"]
+
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_partial_fields_success(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} returns 200 for successful update which changes some of the fields and that the update persists"""
+    # Get previous data for user to store for comparisson
+    response = await client.get("/api/users/1", headers=auth_headers)
+    original_user_data = response.json()
+
+    profile_data = {
+        "first_name": "UpdatedFirstName",
+        "last_name": "UpdatedLastName",
+        # Only update some of the fields
+    }
+    response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
+    assert response.status_code == 200  # Check the error code
+    # Then re-retrieve the data to validated it persisted in the DB
+    response = await client.get("/api/users/1", headers=auth_headers)
+    updated_user_data = response.json()
+
+    # First and last name should be updated, and should be different from the original values
+    assert original_user_data["first_name"] != updated_user_data["first_name"] and updated_user_data["first_name"] == profile_data["first_name"]
+    assert original_user_data["last_name"] != updated_user_data["last_name"] and updated_user_data["last_name"] == profile_data["last_name"]
+
+    # The rest should not have been updated
+    assert original_user_data["child_name"] == updated_user_data["child_name"]
+    assert  original_user_data["child_sex_assigned_at_birth"] == updated_user_data["child_sex_assigned_at_birth"] 
+    assert original_user_data["child_dob"] == updated_user_data["child_dob"]
+    assert original_user_data["avatar_url"] == updated_user_data["avatar_url"]
