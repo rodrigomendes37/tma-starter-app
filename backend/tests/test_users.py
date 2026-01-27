@@ -197,10 +197,18 @@ async def test_patch_user_by_id_not_found(client: AsyncClient, auth_headers):
     """Test that PATCH /api/users/{id} returns 404 for non-existent user"""
     profile_data = {
         "first_name": "updatedFirstName",
-        "LASTNAME": "LastNameShouldNotUpdate", # <-- This field should not be seen
     }
     response = await client.patch("/api/users/999999", headers=auth_headers, json=profile_data)
     assert response.status_code == 404
+
+@pytest.mark.asyncio
+async def test_patch_user_by_id_not_int(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id} returns 422 for invalid id"""
+    profile_data = {
+        "first_name": "updatedFirstName",
+    }
+    response = await client.patch("/api/users/eleven", headers=auth_headers, json=profile_data)
+    assert response.status_code == 422
 
 @pytest.mark.asyncio
 async def test_patch_user_by_id_empty_params_success(client: AsyncClient, auth_headers):
@@ -222,8 +230,10 @@ async def test_patch_user_by_id_bad_params_given(client: AsyncClient, auth_heade
     profile_data = {
         "first_name": 391
     }
+    # NOTE: It is interesting that this one won't go through, but other type conversions (checked in PATCH /api/users/{id}/status) go through just fine
     response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
     assert response.status_code == 422
+
     # Give a bad/un-convertable date value, which should cause 422 error
     profile_data = {
         "child_dob": "BAD DATE THERES NO WAY THIS CONVERTS"
@@ -273,6 +283,7 @@ async def test_patch_user_by_id_partial_fields_success(client: AsyncClient, auth
         "first_name": "UpdatedFirstName",
         "last_name": "UpdatedLastName",
         # Only update some of the fields
+        "CHILDNAME": "Shouldn't be seen"
     }
     response = await client.patch("/api/users/1", headers=auth_headers, json=profile_data)
     assert response.status_code == 200  # Check the error code
@@ -289,6 +300,8 @@ async def test_patch_user_by_id_partial_fields_success(client: AsyncClient, auth
     assert  original_user_data["child_sex_assigned_at_birth"] == updated_user_data["child_sex_assigned_at_birth"] 
     assert original_user_data["child_dob"] == updated_user_data["child_dob"]
     assert original_user_data["avatar_url"] == updated_user_data["avatar_url"]
+
+    assert "CHILDNAME" not in updated_user_data
 # End ------------------------
 
 # --------------------------
@@ -355,9 +368,185 @@ async def test_delete_user_by_id_successful(client: AsyncClient, auth_headers):
     # Then verify that it's actually gone
     response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
     assert response.status_code == 404
-
- 
-
+# End ------------------------
 
 
+# ---------------------------------
+# Test PATCH /api/users/{id}/status
+# ---------------------------------
+# NOTE: Many of the initial tests which test for 404 or 422 failures use a random int for user_id, because they should fail before
+#   getting to use it, therefore it is okay that I have not validated that it's a valid id. I do validate this for tests where it matters
+# NOTE 2: I am pretty sure the test DB that's set up ONLY has the admin user initially. For most tests, I need to first insert a second 
+#   user so that the url is valid (I can't use 1, because the admin can't update itself, and I need to use a valid ID to test other 
+#   aspects of the DB)
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_requires_auth(client: AsyncClient):
+    """Test that PATCH /api/users/{id}/status requires authentication"""
+    status_data = {
+        "user_id": 55,
+        "is_active": False
+    }
+    response = await client.patch("/api/users/1/status", json=status_data )
+    assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_not_found(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id}/status returns 404 for non-existent user"""
+    status_data = {
+        "user_id": 55,
+        "is_active": False
+    }
+    response = await client.patch("/api/users/999999/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 404
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_not_int(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id}/status returns 422 for invalid id in the URL"""
+    status_data = {
+        "user_id": 55,
+        "is_active": False
+    }
+    response = await client.patch("/api/users/eleven/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_no_parameters(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id}/status returns 422 because no paremeters were given"""
+
+    # From here on, I have to insert a new user to use their ID for the url
+    # Add a second user to the DB to test with a correct URL
+    user_data = {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "password123",
+        "role": "user",
+    }
+    response = await client.post("/api/users", json=user_data, headers=auth_headers)
+    assert response.status_code == 201  # Make sure it was made
+    data = response.json()
+    assert "id" in data
+    id_to_use = data["id"]
+
+    # Actual test
+    status_data = {
+        "user_id": 55,
+        "is_active": False
+    }
+    response = await client.patch(f"/api/users/{id_to_use}/status", headers=auth_headers )
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_bad_parameters(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id}/status returns 422 for invalid parameter types and empty parameters"""
+    # Add a second user to the DB to test with a correct URL
+    user_data = {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "password123",
+        "role": "user",
+    }
+    response = await client.post("/api/users", json=user_data, headers=auth_headers)
+    assert response.status_code == 201  # Make sure it was made
+    data = response.json()
+    assert "id" in data
+    id_to_use = data["id"]
+
+
+    # Actual tests
+    # Empty params
+    status_data = { }
+    response = await client.patch(f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 422
+
+    # Bad type for user_id
+    status_data = {
+        "user_id": "eleven",
+        "is_active": False
+    }
+    response = await client.patch(f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 422
+
+     # Bad type for is_active
+    status_data = {
+        "user_id": 55,
+        "is_active": "dkgbdsflkjb"
+    }
+    response = await client.patch(f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_convertable_parameters(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id}/status returns 422 for parameters where the types can be converted"""
+    # Add a second user to the DB to test with a correct URL
+    user_data = {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "password123",
+        "role": "user",
+    }
+    response = await client.post("/api/users", json=user_data, headers=auth_headers)
+    assert response.status_code == 201  # Make sure it was made
+    data = response.json()
+    assert "id" in data
+    id_to_use = data["id"]
+
+
+    # Actual tests
+    # Permissible type for user_id
+    status_data = {
+        "user_id": "2",
+        "is_active": False
+    }
+    response = await client.patch(f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 200
+
+     # Permissible type for is_active
+    status_data = {
+        "user_id": 55,
+        "is_active": "false"
+    }
+    response = await client.patch(f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 200
+    # NOTE: Interestingly, these bad parameters can convert, wherease the first_name parameter of PATCH /api/users/{id} can't convert from int to string
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_prevent_disable_self(client: AsyncClient, auth_headers, admin_user):
+    """Test that PATCH /api/users/{id}/status returns 400 if you try to disable yourself"""
+    status_data = {
+        "user_id": admin_user.id,
+        "is_active": False
+    }
+    response = await client.patch(f"/api/users/{admin_user.id}/status", json=status_data, headers=auth_headers )
+    assert response.status_code == 400
+
+@pytest.mark.asyncio
+async def test_patch_user_status_by_id_successful(client: AsyncClient, auth_headers):
+    """Test that PATCH /api/users/{id}/status returns 200 for successful status update and that the update persists"""
+    # Add a second user to the DB to test with a correct URL
+    user_data = {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "password123",
+        "role": "user",
+    }
+    response = await client.post("/api/users", json=user_data, headers=auth_headers)
+    assert response.status_code == 201  # Make sure it was made
+    original_data = response.json()
+    assert "id" in original_data
+    id_to_use = original_data["id"]
+
+    # Actual test
+    status_data = {
+        "user_id": id_to_use,
+        "is_active": not original_data["is_active"]     # Negate the original activity status
+    }  
+    response = await client.patch(f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers)
+    assert response.status_code == 200  # Confirm the code
+
+    # Then check the user's updated info
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    updated_data = response.json()
+
+    assert original_data["is_active"] != updated_data["is_active"]  # Check that they're opposites
 
