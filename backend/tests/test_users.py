@@ -289,3 +289,75 @@ async def test_patch_user_by_id_partial_fields_success(client: AsyncClient, auth
     assert  original_user_data["child_sex_assigned_at_birth"] == updated_user_data["child_sex_assigned_at_birth"] 
     assert original_user_data["child_dob"] == updated_user_data["child_dob"]
     assert original_user_data["avatar_url"] == updated_user_data["avatar_url"]
+# End ------------------------
+
+# --------------------------
+# Test DELETE /api/users/{id}
+# --------------------------
+@pytest.mark.asyncio
+async def test_delete_user_by_id_requires_auth(client: AsyncClient):
+    """Test that DELETE /api/users/{id} requires authentication"""
+    response = await client.delete("/api/users/1", )
+    assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_delete_user_by_id_not_found(client: AsyncClient, auth_headers):
+    """Test that DELETE /api/users/{id} returns 404 for non-existent user"""
+    response = await client.delete("/api/users/99999999999", headers=auth_headers)
+    assert response.status_code == 404
+
+@pytest.mark.asyncio
+async def test_delete_user_by_id_incorrect_type_fields(client: AsyncClient, auth_headers):
+    """Test that DELETE /api/users/{id} returns 422 because invalid paremeters were given"""
+    response = await client.delete("/api/users/eleven", headers=auth_headers)
+    assert response.status_code == 422
+
+# Getting 307, I'm not sure if this is something I can check for. Without the final slash
+# it just calls get all users. With it (missing anything after) I get a 307 response
+'''
+@pytest.mark.asyncio
+async def test_delete_user_by_id_missing_fields(client: AsyncClient, auth_headers):
+    """Test that DELETE /api/users/{id} returns 422 because no paremeters were given"""
+    response = await client.get("/api/users/", headers=auth_headers)
+    assert response.status_code == 422
+'''
+
+@pytest.mark.asyncio
+async def test_delete_user_by_id_prevent_delete_self(client: AsyncClient, auth_headers, admin_user):
+    """Test that DELETE /api/users/{id} returns 400 if you try to delete yourself"""
+
+    response = await client.delete(f"/api/users/{admin_user.id}", headers=auth_headers)
+    assert response.status_code == 400
+
+@pytest.mark.asyncio
+async def test_delete_user_by_id_successful(client: AsyncClient, auth_headers):
+    """Test that DELETE /api/users/{id} returns 204 when a user is deleted and that it persists""" 
+    # Add a second user to the DB to test deleting it
+    user_data = {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "password123",
+        "role": "user",
+    }
+    response = await client.post("/api/users", json=user_data, headers=auth_headers)
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+
+    id_to_delete = data["id"]
+    # Confirm that the new user exists before deletion
+    response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 200
+
+    # I checked above, the admin user is id = 1, so  I can't delete that one. Deleting new user instead 
+    response = await client.delete(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 204      # Verify the deletion code
+    # Then verify that it's actually gone
+    response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 404
+
+ 
+
+
+
+
