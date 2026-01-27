@@ -5,6 +5,8 @@ Contract-level tests for the /api/courses endpoint
 import pytest
 from httpx import AsyncClient
 
+# get endpoint tests
+
 
 @pytest.mark.asyncio
 async def test_get_all_courses_auth(client: AsyncClient):
@@ -56,7 +58,7 @@ async def test_get_all_us_courses_with_no_admin_auth(
 
 
 @pytest.mark.asyncio
-async def test_get_course_by_id_requires_auth(client, create_course):
+async def test_get_course_by_id_requires_auth(client: AsyncClient, create_course):
     """Test GET /api/courses/{course_id} without authentication"""
     response = await client.get(f"/api/courses/{create_course.id}")
     assert response.status_code == 401
@@ -98,6 +100,22 @@ async def test_get_course_by_invalid_id(
     )
     # test if error code thrown by endpoint is the one expected
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_course_by_invalid_identifier(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
+    """Test GET /api/courses/{course_id} with invalid identifier"""
+    response = await client.get(
+        "/api/courses/abcdefg",
+        headers=auth_headers,
+    )
+    # test if error code thrown by endpoint is the one expected
+    assert response.status_code == 422
+
+
+# post endpoint tests
 
 
 @pytest.mark.asyncio
@@ -159,9 +177,12 @@ async def test_create_course_missing_fields(client: AsyncClient, auth_headers):
 # make endpoint not accept empty strings for titles
 
 
+# patch endpoint tests
+
+
 @pytest.mark.asyncio
 async def test_patch_course_requires_auth(client: AsyncClient, create_course):
-    """Test PATCH /api/courses requires auth"""
+    """Test PATCH /api/courses/{course_id} requires auth"""
     course_data = {"title": "test_course"}
     response = await client.patch(f"/api/courses/{create_course.id}", json=course_data)
     assert response.status_code == 401
@@ -171,7 +192,7 @@ async def test_patch_course_requires_auth(client: AsyncClient, create_course):
 async def test_patch_course_authenticated_but_not_admin(
     client: AsyncClient, user_auth_headers, create_course
 ):
-    """Test PATCH /api/courses rejects authenticated non-admin users"""
+    """Test PATCH /api/courses/{course_id} rejects authenticated non-admin users"""
     course_data = {
         "title": "non_admin_course",
     }
@@ -187,7 +208,7 @@ async def test_patch_course_authenticated_but_not_admin(
 async def test_patch_course_title_and_desc(
     client: AsyncClient, auth_headers, admin_user, create_course
 ):
-    """Test PATCH /api/courses with valid input"""
+    """Test PATCH /api/courses/{course_id} with valid input"""
     # test that name is already "Test Course", and desc already "A course for testing"
     get1_response = await client.get(
         f"/api/courses/{create_course.id}", headers=auth_headers
@@ -223,7 +244,7 @@ async def test_patch_course_title_and_desc(
 async def test_patch_course_title_only(
     client: AsyncClient, auth_headers, admin_user, create_course
 ):
-    """Test PATCH /api/courses with only title"""
+    """Test PATCH /api/courses/{course_id} with only title"""
     # test that name is already "Test Course", and desc already "A course for testing"
     get1_response = await client.get(
         f"/api/courses/{create_course.id}", headers=auth_headers
@@ -258,7 +279,7 @@ async def test_patch_course_title_only(
 async def test_patch_course_desc_only(
     client: AsyncClient, auth_headers, admin_user, create_course
 ):
-    """Test PATCH /api/courses with only description"""
+    """Test PATCH /api/courses/{course_id} with only description"""
     # test that name is already "Test Course", and desc already "A course for testing"
     get1_response = await client.get(
         f"/api/courses/{create_course.id}", headers=auth_headers
@@ -291,7 +312,7 @@ async def test_patch_course_desc_only(
 async def test_patch_course_no_data(
     client: AsyncClient, auth_headers, admin_user, create_course
 ):
-    """Test PATCH /api/courses with no data"""
+    """Test PATCH /api/courses/{course_id} with no data"""
     # test that name is already "Test Course", and desc already "A course for testing"
     get1_response = await client.get(
         f"/api/courses/{create_course.id}", headers=auth_headers
@@ -320,11 +341,48 @@ async def test_patch_course_no_data(
     assert returned_course["description"] == "A course for testing"
 
 
+# ask about this
 @pytest.mark.asyncio
-async def test_patch_course_by_invalid_id(
+async def test_patch_course_empty_title(
     client: AsyncClient, auth_headers, admin_user, create_course
 ):
-    """Test patch /api/courses/{course_id} with invalid id"""
+    """Test PATCH /api/courses/{course_id} with valid input"""
+    # test that name is already "Test Course", and desc already "A course for testing"
+    get1_response = await client.get(
+        f"/api/courses/{create_course.id}", headers=auth_headers
+    )
+    assert get1_response.status_code == 200
+    original_course = get1_response.json()
+    assert original_course["title"] == "Test Course"
+    assert original_course["description"] == "A course for testing"
+
+    course_data = {
+        "title": "",
+        "description": "Test course description",
+    }
+    response = await client.patch(
+        f"/api/courses/{create_course.id}", json=course_data, headers=auth_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    # test that returned data contains expected fields that are correct
+    assert data["title"] == ""
+    assert data["description"] == "Test course description"
+
+    # test if the data was actually saved
+    course_id = data["id"]
+    get2_response = await client.get(f"/api/courses/{course_id}", headers=auth_headers)
+    assert get2_response.status_code == 200
+    returned_course = get2_response.json()
+    assert returned_course["title"] == ""
+    assert returned_course["description"] == "Test course description"
+
+
+@pytest.mark.asyncio
+async def test_patch_course_with_nonexistant_id(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
+    """Test patch /api/courses/{course_id} with nonexistant id"""
     course_data = {
         "title": "changed_test_course",
         "description": "Test course description",
@@ -337,3 +395,166 @@ async def test_patch_course_by_invalid_id(
     )
     # test if error code thrown by endpoint is the one expected
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_patch_course_by_invalid_id(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
+    """Test patch /api/courses/{course_id} with invalid id"""
+    course_data = {
+        "title": "changed_test_course",
+        "description": "Test course description",
+    }
+
+    response = await client.patch(
+        "/api/courses/abcdefg",
+        json=course_data,
+        headers=auth_headers,
+    )
+    # test if error code thrown by endpoint is the one expected
+    assert response.status_code == 422
+
+
+# ask if this is expected behavior or not
+@pytest.mark.asyncio
+async def test_patch_course_change_id(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
+    """Test patch /api/courses/{course_id} changing id"""
+    course_data = {
+        "id": "100",
+    }
+
+    response = await client.patch(
+        f"/api/courses/{create_course.id}",
+        json=course_data,
+        headers=auth_headers,
+    )
+    # test if error code thrown by endpoint is the one expected
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_patch_course_with_invalid_body(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
+    """Test patch /api/courses/{course_id} with invalid body"""
+    course_data = {
+        "title": 7,
+        "description": ["hmm"],
+    }
+
+    response = await client.patch(
+        f"/api/courses/{create_course.id}",
+        json=course_data,
+        headers=auth_headers,
+    )
+    # test if error code thrown by endpoint is the one expected
+    assert response.status_code == 422
+
+    # test if anything in the db was changed
+    response2 = await client.get(
+        f"/api/courses/{create_course.id}",
+        headers=auth_headers,
+    )
+    assert response2.json()["title"] == "Test Course"
+    assert response2.json()["description"] == "A course for testing"
+
+
+# delete course tests
+
+
+@pytest.mark.asyncio
+async def test_delete_course_requires_auth(client: AsyncClient, create_course):
+    """Test DELETE /api/courses/{course_id} requires auth"""
+    response = await client.delete(f"/api/courses/{create_course.id}")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_delete_course_authenticated_but_not_admin(
+    client: AsyncClient, user_auth_headers, create_course
+):
+    """Test DELETE /api/courses/{course_id} rejects authenticated non-admin users"""
+    response = await client.delete(
+        f"/api/courses/{create_course.id}",
+        headers=user_auth_headers,
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_delete_course_valid(client: AsyncClient, auth_headers, create_course):
+    """Test DELETE /api/courses/{course_id} with valid course & credentials"""
+    # test that course with associated id actually exists
+    get_response = await client.get(
+        f"/api/courses/{create_course.id}", headers=auth_headers
+    )
+    assert get_response.status_code == 200
+
+    # now delete it
+    response = await client.delete(
+        f"/api/courses/{create_course.id}",
+        headers=auth_headers,
+    )
+    assert response.status_code == 204
+
+    # test that it was actually deleted
+    response2 = await client.get(
+        f"/api/courses/{create_course.id}",
+        headers=auth_headers,
+    )
+    assert response2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_course_nonexistant_course_id(
+    client: AsyncClient, auth_headers, create_course
+):
+    """Test DELETE /api/courses/{course_id} with nonexistant course"""
+    response = await client.delete(
+        "/api/courses/0",
+        headers=auth_headers,
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_course_invalid_course_id(
+    client: AsyncClient, auth_headers, create_course
+):
+    """Test DELETE /api/courses/{course_id} with nonexistant course"""
+    response = await client.delete(
+        "/api/courses/abcdefg",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_delete_course_twice(client: AsyncClient, auth_headers, create_course):
+    """Test DELETE /api/courses/{course_id} with nonexistant course"""
+    response = await client.delete(
+        f"/api/courses/{create_course.id}",
+        headers=auth_headers,
+    )
+    assert response.status_code == 204
+
+    response2 = await client.delete(
+        f"/api/courses/{create_course.id}",
+        headers=auth_headers,
+    )
+    assert response2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_course_invalid_course_identifier(
+    client: AsyncClient, auth_headers, create_course
+):
+    """Test DELETE /api/courses/{course_id} with nonexistant course"""
+    response = await client.delete(
+        "/api/courses/abc",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
