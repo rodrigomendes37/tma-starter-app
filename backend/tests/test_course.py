@@ -54,15 +54,18 @@ async def test_get_all_us_courses_with_no_admin_auth(
     # verify the list contains no courses bc lack of auth
     assert data == []
 
+
 @pytest.mark.asyncio
 async def test_get_course_by_id_requires_auth(client, create_course):
-    """Test GET /api/courses/{course_id} without authenticated"""
+    """Test GET /api/courses/{course_id} without authentication"""
     response = await client.get(f"/api/courses/{create_course.id}")
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_get_course_by_valid_id(client: AsyncClient, auth_headers, admin_user, create_course):
+async def test_get_course_by_valid_id(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
     """Test GET /api/courses/{course_id} while authenticated"""
     response = await client.get(
         f"/api/courses/{create_course.id}",
@@ -73,8 +76,9 @@ async def test_get_course_by_valid_id(client: AsyncClient, auth_headers, admin_u
     # verify the data is returned as a dict
     assert isinstance(data, dict)
 
-    # verify the created course contains the required fields, and the fields are correct for the specific course
-    
+    # verify the created course contains the required fields
+    # and the fields are correct for the specific course
+
     assert data["id"] == create_course.id
     assert data["title"] == create_course.title
     assert data["description"] == create_course.description
@@ -82,12 +86,224 @@ async def test_get_course_by_valid_id(client: AsyncClient, auth_headers, admin_u
     assert "created_at" in data
     assert "updated_at" in data
 
+
 @pytest.mark.asyncio
-async def test_get_course_by_invalid_id(client: AsyncClient, auth_headers, admin_user, create_course):
+async def test_get_course_by_invalid_id(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
     """Test GET /api/courses/{course_id} while authenticated"""
     response = await client.get(
         "/api/courses/0",
         headers=auth_headers,
     )
-    #test if error code thrown by endpoint is the one expected 
+    # test if error code thrown by endpoint is the one expected
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_course_requires_auth(client: AsyncClient ):
+    """Test POST /api/courses requires auth"""
+    course_data = {
+        "title": "test_course"
+    }
+    response = await client.post("/api/courses", json=course_data)
+    assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_create_course_authenticated_but_not_admin(client: AsyncClient, user_auth_headers):
+    """Test POST /api/courses rejects authenticated non-admin users"""
+    course_data = {
+        "title": "non_admin_course",
+        "description": "dont allow this thanks"
+    }
+    response = await client.post("/api/courses", json=course_data, headers=user_auth_headers,)
+    assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_create_course_valid_input(client: AsyncClient, auth_headers, admin_user):
+    """Test POST /api/courses with valid input"""
+    course_data = {
+        "title": "test_course",
+        "description": "Test course description"
+    }
+    response = await client.post("/api/courses", json=course_data, headers = auth_headers)
+    assert response.status_code == 201
+    data = response.json()
+    # test that returned data contains all expected fields 
+    assert data["title"] == "test_course"
+    assert data["description"] == "Test course description"
+    assert "id" in data
+    assert "created_at" in data
+    assert "updated_at" in data
+
+    #test if the data was actually saved
+    course_id = data["id"]
+    get_response = await client.get(f"/api/courses/{course_id}", headers=auth_headers)
+    assert get_response.status_code == 200
+    returned_course = get_response.json()
+    assert returned_course["title"] == "test_course"
+    assert returned_course["description"] == "Test course description"
+
+@pytest.mark.asyncio
+async def test_create_course_missing_fields(client: AsyncClient, auth_headers):
+    """Test that POST /api/courses returns 422 for missing required fields"""
+    user_data = {
+        "description": "nope"
+        # Missing title and 
+    }
+    response = await client.post("/api/courses", json=user_data, headers=auth_headers)
+    assert response.status_code == 422
+
+# make endpoint not accept empty strings for titles
+
+@pytest.mark.asyncio
+async def test_patch_course_requires_auth(client: AsyncClient, create_course ):
+    """Test PATCH /api/courses requires auth"""
+    course_data = {
+        "title": "test_course"
+    }
+    response = await client.patch(f"/api/courses/{create_course.id}", json=course_data)
+    assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_patch_course_authenticated_but_not_admin(client: AsyncClient, user_auth_headers, create_course):
+    """Test PATCH /api/courses rejects authenticated non-admin users"""
+    course_data = {
+        "title": "non_admin_course",
+    }
+    response = await client.patch(f"/api/courses/{create_course.id}", json=course_data, headers=user_auth_headers,)
+    assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_patch_course_title_and_desc(client: AsyncClient, auth_headers, admin_user, create_course):
+    """Test PATCH /api/courses with valid input"""
+    # test that name is already "Test Course", and desc already "A course for testing"
+    get1_response = await client.get(f"/api/courses/{create_course.id}", headers=auth_headers)
+    assert get1_response.status_code == 200
+    original_course = get1_response.json()
+    assert original_course["title"] == "Test Course"
+    assert original_course["description"] == "A course for testing"
+
+    course_data = {
+        "title": "changed_test_course",
+        "description": "Test course description"
+    }
+    response = await client.patch(f"/api/courses/{create_course.id}", json=course_data, headers = auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    # test that returned data contains expected fields that are correct
+    assert data["title"] == "changed_test_course"
+    assert data["description"] == "Test course description"
+
+
+    #test if the data was actually saved
+    course_id = data["id"]
+    get2_response = await client.get(f"/api/courses/{course_id}", headers=auth_headers)
+    assert get2_response.status_code == 200
+    returned_course = get2_response.json()
+    assert returned_course["title"] == "changed_test_course"
+    assert returned_course["description"] == "Test course description"
+
+@pytest.mark.asyncio
+async def test_patch_course_title_only(client: AsyncClient, auth_headers, admin_user, create_course):
+    """Test PATCH /api/courses with only title"""
+    # test that name is already "Test Course", and desc already "A course for testing"
+    get1_response = await client.get(f"/api/courses/{create_course.id}", headers=auth_headers)
+    assert get1_response.status_code == 200
+    original_course = get1_response.json()
+    assert original_course["title"] == "Test Course"
+    assert original_course["description"] == "A course for testing"
+
+    course_data = {
+        "title": "changed_test_course",
+    }
+    response = await client.patch(f"/api/courses/{create_course.id}", json=course_data, headers = auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    # test that returned data contains expected fields that are correct
+    assert data["title"] == "changed_test_course"
+    assert data["description"] == "A course for testing"
+
+
+    #test if the data was actually saved
+    course_id = data["id"]
+    get2_response = await client.get(f"/api/courses/{course_id}", headers=auth_headers)
+    assert get2_response.status_code == 200
+    returned_course = get2_response.json()
+    assert returned_course["title"] == "changed_test_course"
+    assert returned_course["description"] == "A course for testing"
+
+@pytest.mark.asyncio
+async def test_patch_course_desc_only(client: AsyncClient, auth_headers, admin_user, create_course):
+    """Test PATCH /api/courses with only description"""
+    # test that name is already "Test Course", and desc already "A course for testing"
+    get1_response = await client.get(f"/api/courses/{create_course.id}", headers=auth_headers)
+    assert get1_response.status_code == 200
+    original_course = get1_response.json()
+    assert original_course["title"] == "Test Course"
+    assert original_course["description"] == "A course for testing"
+
+    course_data = {
+        "description": "Test course description"
+    }
+    response = await client.patch(f"/api/courses/{create_course.id}", json=course_data, headers = auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    # test that returned data contains expected fields that are correct
+    assert data["title"] == "Test Course"
+    assert data["description"] == "Test course description"
+
+
+    #test if the data was actually saved
+    course_id = data["id"]
+    get2_response = await client.get(f"/api/courses/{course_id}", headers=auth_headers)
+    assert get2_response.status_code == 200
+    returned_course = get2_response.json()
+    assert returned_course["title"] == "Test Course"
+    assert returned_course["description"] == "Test course description"
+
+@pytest.mark.asyncio
+async def test_patch_course_no_data(client: AsyncClient, auth_headers, admin_user, create_course):
+    """Test PATCH /api/courses with no data"""
+    # test that name is already "Test Course", and desc already "A course for testing"
+    get1_response = await client.get(f"/api/courses/{create_course.id}", headers=auth_headers)
+    assert get1_response.status_code == 200
+    original_course = get1_response.json()
+    assert original_course["title"] == "Test Course"
+    assert original_course["description"] == "A course for testing"
+
+    course_data = {
+    }
+    response = await client.patch(f"/api/courses/{create_course.id}", json=course_data, headers = auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    # test that returned data contains expected fields that are correct
+    assert data["title"] == "Test Course"
+    assert data["description"] == "A course for testing"
+
+
+    #test if the data was actually saved
+    course_id = data["id"]
+    get2_response = await client.get(f"/api/courses/{course_id}", headers=auth_headers)
+    assert get2_response.status_code == 200
+    returned_course = get2_response.json()
+    assert returned_course["title"] == "Test Course"
+    assert returned_course["description"] == "A course for testing"
+
+@pytest.mark.asyncio
+async def test_patch_course_by_invalid_id(
+    client: AsyncClient, auth_headers, admin_user, create_course
+):
+    """Test patch /api/courses/{course_id} with invalid id"""
+    course_data = {
+        "title": "changed_test_course",
+        "description": "Test course description"
+    }
+
+    response = await client.patch(
+        "/api/courses/0",
+        json=course_data,
+        headers=auth_headers,
+    )
+    # test if error code thrown by endpoint is the one expected
     assert response.status_code == 404
