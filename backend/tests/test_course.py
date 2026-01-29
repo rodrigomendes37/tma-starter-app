@@ -434,6 +434,14 @@ async def test_patch_course_change_id(
     # test if error code thrown by endpoint is the one expected
     assert response.status_code == 200
 
+    # test if the id can actually change
+    response2 = await client.get(
+        "/api/courses/1",  # 1 b/c thats whats the unchanged course id should be
+        headers=auth_headers,
+    )
+
+    assert response2.json()["title"] == "Test Course"
+
 
 @pytest.mark.asyncio
 async def test_patch_course_with_invalid_body(
@@ -524,7 +532,7 @@ async def test_delete_course_nonexistant_course_id(
 async def test_delete_course_invalid_course_id(
     client: AsyncClient, auth_headers, create_course
 ):
-    """Test DELETE /api/courses/{course_id} with nonexistant course"""
+    """Test DELETE /api/courses/{course_id} with bad course id"""
     response = await client.delete(
         "/api/courses/abcdefg",
         headers=auth_headers,
@@ -546,15 +554,3 @@ async def test_delete_course_twice(client: AsyncClient, auth_headers, create_cou
         headers=auth_headers,
     )
     assert response2.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_delete_course_invalid_course_identifier(
-    client: AsyncClient, auth_headers, create_course
-):
-    """Test DELETE /api/courses/{course_id} with nonexistant course"""
-    response = await client.delete(
-        "/api/courses/abc",
-        headers=auth_headers,
-    )
-    assert response.status_code == 422
