@@ -8,7 +8,13 @@ from httpx import AsyncClient
 """Test that GET /api/groups list all accessible groups"""
 
 
-# Admins and managers see all groups
+@pytest.mark.asyncio
+async def test_get_all_groups_auth(client: AsyncClient):
+    """Test that GET /api/groups requires authentication"""
+    response = await client.get("/api/groups")
+    assert response.status_code == 401
+
+
 @pytest.mark.asyncio
 async def test_get_all_groups_admin(
     client: AsyncClient,
@@ -35,7 +41,6 @@ async def test_get_all_groups_admin(
         assert "member_count" in group
 
 
-# Regular users see only groups they're members of
 @pytest.mark.asyncio
 async def test_get_all_groups_regular_user(
     client: AsyncClient,
@@ -63,6 +68,15 @@ async def test_get_all_groups_regular_user(
 
 
 """Test that GET /api/groups/{id} gets a single group with members"""
+
+
+@pytest.mark.asyncio
+async def test_get_group_by_id_auth(
+    client: AsyncClient, test_group_accessible_by_regular
+):
+    """Test that GET /api/groups/{id} requires authentication"""
+    response = await client.get("/api/groups/{test_group_accessible_by_regular.id}")
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -186,6 +200,13 @@ async def test_get_group_with_string_id_admin(client: AsyncClient, auth_headers)
 
 
 """Test that POST /api/groups creates a new group"""
+
+
+@pytest.mark.asyncio
+async def test_create_group_auth(client: AsyncClient):
+    """Test that POST /api/groups requires authentication"""
+    response = await client.post("/api/groups")
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -314,6 +335,17 @@ async def test_create_group_regular_user_valid(client: AsyncClient, user_auth_he
 
 
 """Test that PATCH /api/groups/{id} updates an existing group"""
+
+
+@pytest.mark.asyncio
+async def test_update_group_auth(
+    client: AsyncClient, test_group_inaccessible_by_regular
+):
+    """Test that PATCH /api/groups/{id} requires authentication"""
+    response = await client.patch(
+        f"/api/groups/{test_group_inaccessible_by_regular.id}", json={"name": "test"}
+    )
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -538,6 +570,17 @@ async def test_update_group_admin_string_id(client: AsyncClient, auth_headers):
 
 
 """Test that DELETE /api/groups/{id} deletes a group"""
+
+
+@pytest.mark.asyncio
+async def test_delete_group_auth(
+    client: AsyncClient, test_group_inaccessible_by_regular
+):
+    """Test that DELETE /api/groups/{id} requires authentication"""
+    response = await client.delete(
+        f"/api/groups/{test_group_inaccessible_by_regular.id}"
+    )
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
