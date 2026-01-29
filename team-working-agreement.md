@@ -28,6 +28,7 @@ In person, in the 3rd floor of RRO.
 ## Work Distribution
 - How will we divide work? (volunteer? rotate? assign?)
 Collaborative assignment. Identify what needs to get done and work together to divide it logically and assign/volunteer takers.
+    - Once work is split up, one member is responsible for sending a Discord message summarizing the divison of work. After this, the person responsible for the work should make any related Issues on GitHub, and definetly needs to make a Pull Request detailing what they've done regarding their task. That person must also assign at least one person to review the PR. It is likely this person will be pre-determined during the Discord messaging stage, but if they are not. The group should hold a quick discussion (in person or over text) to determine who is available to look over it. 
 - How will we ensure everyone contributes?
 Expect contribution, but be ready to address people by name who are not meeting the predetermined expectations.
 - What if someone is struggling?
@@ -36,18 +37,31 @@ If you are struggling PLEASE reach out as quickly and openly as possible, it is 
 ## Code Review
 - Who reviews PRs? (everyone? specific people?)
 Everyone, rotate per assignment. This rotation should be factored in during work distribution, and should take people's busyness into consideration. When making your PR assign that designated person. 
+    - Even if you have no suggestions for improvement on a PR, still leave a comment on it. This reaffirms that you have spent time truly reviewing the code, and haven't just blindly approved it for merging.
 - How quickly should reviews happen? (within 24 hours?)
 Within 24 hours. Communicate if you can’t do it, you are responsible for finding someone else who can.
 - What makes a good review? (constructive, specific, kind)
 See Dr. Sarah’s recourses on that.
 
 ## Conflict Resolution
-- What if we disagree?
-Fight in the parking lot. Have a mature conversation, over text if that makes you feel more comfortable.
-- What if someone isn't contributing?
-Involve teachers, after trying to handle the conflict within the group.
-- How do we give feedback?
-PRs, using the text channel. Be sure to use your please’s and thank you’s! 
+- **Disagreements About Implementation:** 
+  - Discuss in the Discord chanel and/or at team meetings, give each perspective time to list why they think their implementation would fit the project better. Then hold a discussion where everyone open-mindedly considers the pros and cons of each implementation. Be willing to concede your side if logic presents a better option. This project isn't about who comes up with *more* of the solutions, but which solutions are *best*.
+  - If no consensus is met, vote (majority rules)
+  - Escalate to instructor if needed, be ready to provide a small written analysis about the implementation you are suggesting.
+- **Interpersonal Disagreements**
+    - Such disagreements should be handled privately. Please try not to bring issues like this into the Discord chanel or meetings, unless the disagreement is causing a safety concern or making one member of the group uncomfortable to be around the other. 
+    - Try to come to a mutual understanding, even if that understanding is that the two parties won't see eye-to-eye on the topic. Remember that this team project will only last for a few weeks.
+    - In extreme cases, involve an instructor.
+- **Non-contribution:**
+  - The team should take great care to clearly define the individual expectations for each person. If someone is not meeting these expectations by the agreed upon deadline, or seems to be significantly falling behind prior to the deadline, check in with them privately first (maybe they're struggling?).
+    - If they are struggling, than the team should be willing to re organize tasks / expectations in a way that is appropriate.
+  - If the behavior continues, especially without decent communication from the team member in question, discuss in team meeting.
+  - Finally, escalate to instructor if needed
+- **Feedback:** 
+  - Give feedback directly and kindly. Try to focus not only on things for improvement, but also things that the other person did well. Acknowledging these things can help the team identify good habits and qualities that everyone hone in on, as well has negative practices that can be improved upon.
+  - Focus on behavior, not personality
+  - Use "I" statements ("I feel..." not "You always...")
+
 
 ## Learning & Growth
 - How will we help each other learn?
