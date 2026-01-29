@@ -194,8 +194,11 @@ async def test_create_user_duplicate_username(
 
 
 # --------------------------
-# Test PATCh /api/users/{id}
+# Test PATCH /api/users/{id}
 # --------------------------
+# TODO: Modify endpoint to allow a user to update PARTS of their own profile
+# Wonder about how a manager would recognize a user if they change their name...
+# TODO: Make tests to verify this part
 @pytest.mark.asyncio
 async def test_patch_user_by_id_requires_auth(client: AsyncClient, user_auth_headers):
     """Test that PATCH /api/users/{id} requires authentication"""
@@ -239,11 +242,21 @@ async def test_patch_user_by_id_not_int(client: AsyncClient, auth_headers):
 async def test_patch_user_by_id_empty_params_success(client: AsyncClient, auth_headers):
     """Test that PATCH /api/users/{id} succeeds when given empty parameters,
     because all params are optional"""
+    # First get the og user data
+    response = await client.get("/api/users/1", headers=auth_headers)
+    assert response.status_code == 200
+    original_user_data = response.json()
+
     profile_data = {}
     response = await client.patch(
         "/api/users/1", headers=auth_headers, json=profile_data
     )
     assert response.status_code == 200
+
+    response = await client.get("/api/users/1", headers=auth_headers)
+    assert response.status_code == 200
+    new_user_data = response.json()
+    assert new_user_data == original_user_data
 
 
 @pytest.mark.asyncio
@@ -257,6 +270,7 @@ async def test_patch_user_by_id_no_params_given(client: AsyncClient, auth_header
 async def test_patch_user_by_id_bad_params_given(client: AsyncClient, auth_headers):
     """Test that PATCH /api/users/{id} returns 422 for invalid parameter types"""
     # Most params are strings. They are not automatically converted to string.
+    # ! Here is what you're looking for
     profile_data = {"first_name": 391}
     # NOTE: It is interesting that this one won't go through, but other
     # type conversions (checked in PATCH /api/users/{id}/status) go through just fine
@@ -301,7 +315,8 @@ async def test_patch_user_by_id_empty_string_param(client: AsyncClient, auth_hea
 @pytest.mark.asyncio
 async def test_patch_user_by_id_all_fields_success(client: AsyncClient, auth_headers):
     """Test that PATCH /api/users/{id} returns 200 for successful
-    update of all fields and that the update persists"""
+    update of all fields and that the update persists, and that the updated_at
+    time is actually changed"""
     # Get previous data for user to store for comparisson
     response = await client.get("/api/users/1", headers=auth_headers)
     original_user_data = response.json()
@@ -349,6 +364,10 @@ async def test_patch_user_by_id_all_fields_success(client: AsyncClient, auth_hea
         original_user_data["avatar_url"] != updated_user_data["avatar_url"]
         and updated_user_data["avatar_url"] == profile_data["avatar_url"]
     )
+
+    # Also check that the updated time is updated
+    assert original_user_data["created_at"] == updated_user_data["created_at"]
+    assert original_user_data["updated_at"] < updated_user_data["updated_at"]
 
 
 @pytest.mark.asyncio
@@ -490,6 +509,29 @@ async def test_delete_user_by_id_prevent_double_delete(
     assert response.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_delete_user_by_id_inactive_account(
+    client: AsyncClient, auth_headers, regular_user
+):
+    """Test that DELETE /api/users/{id} returns 200 when deleting an inactive account"""
+    id_to_delete = regular_user.id
+    change_status = {"user_id": id_to_delete, "is_active": False}
+    response = await client.patch(
+        f"/api/users/{id_to_delete}/status", json=change_status, headers=auth_headers
+    )
+    assert response.status_code == 200  # Verify that the change went through
+    response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.json()["is_active"] is False
+
+    # Now delete them
+    response = await client.delete(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 204
+
+    # Verify they're gone
+    response = await client.get(f"/api/users/{id_to_delete}", headers=auth_headers)
+    assert response.status_code == 404
+
+
 # End ------------------------
 
 
@@ -600,19 +642,61 @@ async def test_patch_user_status_by_id_convertable_parameters(
     where the types can be converted"""
     id_to_use = regular_user.id
 
+    # True = 1 False  = 0
+    # Get the user and verify their status is active?
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200
+    original_user_data = response.json()
+    assert original_user_data["is_active"] is True
+
     # Permissible type for user_id
-    status_data = {"user_id": "2", "is_active": False}
+    # The reason this is possible is because it's not actually reading the user_id from
+    # the parameter, it's looking at the id passed into the url (see next test for more
+    # definitive proof)
+    status_data = {
+        "user_id": "2",
+        "is_active": False,
+    }  # Could just be ignoring the "2" for user
     response = await client.patch(
         f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers
     )
     assert response.status_code == 200
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200
+    original_user_data = response.json()
+    assert original_user_data["is_active"] is False  # It did actually change
 
-    # Permissible type for is_active
+    # Permissible type for is_active. Also tests which ID is used if a different one
+    # is passed in for the parameter and the url. In this case, it ignores the parameter
+    # one, 55, and uses the one in the url, id_to_user, which is 2
+    status_data = {"user_id": 55, "is_active": 1}
+    response = await client.patch(
+        f"/api/users/{id_to_use}/status",
+        json=status_data,
+        headers=auth_headers,
+        # NOTE: It is ignoring the user_id parameter in the body, and only looking
+        # at the user id in the url
+    )
+    assert response.status_code == 200
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200
+    original_user_data = response.json()
+    assert original_user_data["is_active"] is True  # It did actually change (again)
+
     status_data = {"user_id": 55, "is_active": "false"}
     response = await client.patch(
-        f"/api/users/{id_to_use}/status", json=status_data, headers=auth_headers
+        f"/api/users/{id_to_use}/status",
+        json=status_data,
+        headers=auth_headers,
+        # NOTE: It is ignoring the user_id parameter in the body, and only
+        # looking at the  user id in the url
     )
     assert response.status_code == 200
+    response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
+    assert response.status_code == 200
+    original_user_data = response.json()
+    assert original_user_data["is_active"] is False  # It did actually change (again)
+
     # NOTE: Interestingly, these bad parameters can convert, wherease the
     # first_name parameter of PATCH /api/users/{id} can't convert from int to string
 
