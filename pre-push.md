@@ -1,12 +1,15 @@
 ## What to do before you push
 ### Remove All Debug Code and Make sure the Code Runs
 Make sure console logs/print statements are removed. If you have blocks of commented code, delete it (if reasonable) to keep the codebase clean.
-### Run All Linters:
-Backend: `docker exec -it tma_backend bash scripts/fix.sh`
+### Run All Linters AND CHECKS:
+(The checks pick up on things you'll have to manually do)
+Backend: `docker exec -it tma_backend bash scripts/fix.sh` and
+`docker exec -it tma_backend bash scripts/check.sh`
 
-Frontend: `docker exec -it tma_frontend npm run fix`
+Frontend: `docker exec -it tma_frontend npm run fix` and 
+`docker exec -it tma_frontend npm run check`
 
-Mobile: `cd mobile` then `npm run fix`
+Mobile: `cd mobile` then `npm run fix` and `npm run check`
 ### Run All Tests:
 -*Feel free to remove the `:verbose`*-
 
