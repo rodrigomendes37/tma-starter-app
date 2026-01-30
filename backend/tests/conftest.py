@@ -129,9 +129,10 @@ async def regular_user(test_db):
     """
     Create a regular user (role: "user") for testing
 
-    Use this when you need to test endpoints that should
-    work for any authenticated user, or when testing that
-    non-admin users are denied access to admin-only endpoints.
+    Use this when you need to test endpoints that
+    should work for any authenticated user,
+    or when testing that non-admin users are denied access
+    to admin-only endpoints.
     """
     async with TestSessionLocal() as session:
         from sqlalchemy.future import select
@@ -192,3 +193,68 @@ async def user_auth_headers(client, regular_user, test_db):
     # Cleanup
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(get_current_active_user, None)
+
+
+@pytest.fixture
+async def test_group_inaccessible_by_regular(test_db, admin_user):
+    """Create a group for testing that is accessible by a manager or admin role user
+    but not regular user
+    use for testing getting, updating, deleting group by admin,
+    and forbidden access by regular user
+    """
+    async with TestSessionLocal() as session:
+        from models import Group
+
+        # Create group
+        group = Group(
+            name="test_group:",
+            description="A group for testing",
+            created_by=admin_user.id,
+        )
+        session.add(group)
+        await session.commit()
+        await session.refresh(group)
+
+        yield group
+
+
+@pytest.fixture
+async def test_group_accessible_by_regular(test_db, admin_user, regular_user):
+    """Create a group for testing that is accessible by regular user
+    use for testing getting, updating, deleting group by regular user"""
+    async with TestSessionLocal() as session:
+        from sqlalchemy.future import select
+        from sqlalchemy.orm import joinedload
+
+        from models import Group
+        from models.group import UserGroup
+
+        # Create group
+        group = Group(
+            name="test_group_accessible_by_regular",
+            description="A group for testing accessible by regular user",
+            created_by=admin_user.id,
+        )
+        session.add(group)
+        await session.commit()
+        await session.refresh(group)
+
+        # Add regular user as member of the group
+        membership = UserGroup(
+            user_id=regular_user.id,
+            group_id=group.id,
+        )
+
+        session.add(membership)
+        await session.commit()
+
+        # Load membership relationship
+        # Load with role relationship
+        result = await session.execute(
+            select(UserGroup)
+            .where(UserGroup.group_id == group.id)
+            .options(joinedload(UserGroup.user))
+        )
+        group_with_members = result.scalar_one()
+
+        yield group_with_members
