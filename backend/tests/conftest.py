@@ -129,6 +129,8 @@ async def regular_user(test_db):
     """
     Create a regular user (role: "user") for testing
 
+    Use when you need to test endpoints that should work for any authenticated user,
+    or when testing that non-admin users are denied access to admin-only endpoints.
     Use this when you need to test endpoints that
     should work for any authenticated user,
     or when testing that non-admin users are denied access
@@ -193,6 +195,26 @@ async def user_auth_headers(client, regular_user, test_db):
     # Cleanup
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(get_current_active_user, None)
+
+
+# fixture for adding a course for testing
+@pytest.fixture
+async def create_course(admin_user, test_db):
+    from datetime import datetime
+
+    from models.course import Course
+
+    async with TestSessionLocal() as session:
+        course = Course(
+            title="Test Course",
+            description="A course for testing",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        session.add(course)
+        await session.commit()
+        await session.refresh(course)
+        return course
 
 
 @pytest.fixture
