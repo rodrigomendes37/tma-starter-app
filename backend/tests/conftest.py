@@ -215,6 +215,8 @@ async def create_course(admin_user, test_db):
         await session.commit()
         await session.refresh(course)
         return course
+
+
 @pytest.fixture
 async def test_group_inaccessible_by_regular(test_db, admin_user):
     """Create a group for testing that is accessible by a manager or admin role user
