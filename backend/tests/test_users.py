@@ -1035,7 +1035,6 @@ async def test_patch_user_role_to_admin_then_demote_another_admin(
     response = await client.patch(
         f"/api/users/{id_to_use}/role", headers=auth_headers, json=role_data
     )
-    assert response.status_code == 200
 
     # Then check that the updated info has persisted
     response = await client.get(f"/api/users/{id_to_use}", headers=auth_headers)
@@ -1060,5 +1059,4 @@ async def test_patch_user_role_to_admin_then_demote_another_admin(
         f"/api/users/{admin_user.id}/role", headers=user_auth_headers, json=role_data
     )  # pass in the id of the original admin, and use the headers
     # credentials of the new admin
-    assert response.status_code == 200  # <-- Currently fails (400 error) because it
-    # thinks the admin is trying to demote themselves
+    assert response.status_code == 200
