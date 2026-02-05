@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from auth import create_access_token
 from database import get_db
 from models import Base, Role, User
 from server import app
@@ -30,6 +31,33 @@ async def override_get_db():
 
 # Apply the override
 app.dependency_overrides[get_db] = override_get_db
+
+
+def create_auth_token(user: User) -> str:
+    """
+    Create a JWT token for a user object.
+
+    Args:
+        user: User object with username attribute
+
+    Returns:
+        JWT token string
+    """
+    return create_access_token(data={"sub": user.username})
+
+
+def create_auth_headers(user: User) -> dict[str, str]:
+    """
+    Create authentication headers for a user object.
+
+    Args:
+        user: User object with username attribute
+
+    Returns:
+        Dictionary with Authorization header
+    """
+    token = create_auth_token(user)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture(scope="function")
@@ -103,25 +131,9 @@ async def admin_user(test_db):
 
 
 @pytest.fixture
-async def auth_headers(client, admin_user, test_db):
-    """Get authentication headers by overriding auth dependencies"""
-    from auth import get_current_user, require_admin
-
-    async def override_get_current_user():
-        return admin_user
-
-    async def override_require_admin():
-        return admin_user
-
-    # Override authentication dependencies to return our test admin user
-    app.dependency_overrides[get_current_user] = override_get_current_user
-    app.dependency_overrides[require_admin] = override_require_admin
-
-    yield {"Authorization": "Bearer test-token"}
-
-    # Clean up overrides after test
-    app.dependency_overrides.pop(get_current_user, None)
-    app.dependency_overrides.pop(require_admin, None)
+async def auth_headers(admin_user):
+    """Get authentication headers for admin user using JWT token"""
+    return create_auth_headers(admin_user)
 
 
 @pytest.fixture
@@ -129,12 +141,9 @@ async def regular_user(test_db):
     """
     Create a regular user (role: "user") for testing
 
-    Use when you need to test endpoints that should work for any authenticated user,
-    or when testing that non-admin users are denied access to admin-only endpoints.
-    Use this when you need to test endpoints that
-    should work for any authenticated user,
-    or when testing that non-admin users are denied access
-    to admin-only endpoints.
+    Use this when you need to test endpoints that should
+    work for any authenticated user, or when testing that
+    non-admin users are denied access to admin-only endpoints.
     """
     async with TestSessionLocal() as session:
         from sqlalchemy.future import select
@@ -166,9 +175,9 @@ async def regular_user(test_db):
 
 
 @pytest.fixture
-async def user_auth_headers(client, regular_user, test_db):
+async def user_auth_headers(regular_user):
     """
-    Get authentication headers for a regular user (non-admin)
+    Get authentication headers for a regular user (non-admin) using JWT token
 
     Usage in tests:
         async def test_user_cannot_create_course(client, user_auth_headers):
@@ -179,22 +188,24 @@ async def user_auth_headers(client, regular_user, test_db):
             )
             assert response.status_code == 403  # Forbidden
     """
-    from auth import get_current_active_user, get_current_user
+    return create_auth_headers(regular_user)
 
-    async def override_get_current_user():
-        return regular_user
 
-    async def override_get_current_active_user():
-        return regular_user
+@pytest.fixture
+def make_auth_headers():
+    """
+    Factory fixture to create auth headers for any user.
 
-    app.dependency_overrides[get_current_user] = override_get_current_user
-    app.dependency_overrides[get_current_active_user] = override_get_current_active_user
+    Usage:
+        async def test_something(client, make_auth_headers, admin_user, regular_user):
+            admin_headers = make_auth_headers(admin_user)
+            user_headers = make_auth_headers(regular_user)
 
-    yield {"Authorization": "Bearer test-token"}
-
-    # Cleanup
-    app.dependency_overrides.pop(get_current_user, None)
-    app.dependency_overrides.pop(get_current_active_user, None)
+            # Use both in the same test
+            response1 = await client.get("/api/users", headers=admin_headers)
+            response2 = await client.get("/api/users", headers=user_headers)
+    """
+    return create_auth_headers
 
 
 # fixture for adding a course for testing
