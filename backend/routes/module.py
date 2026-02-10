@@ -33,7 +33,7 @@ async def get_all_modules(
     course_id: Optional[int] = Query(None),
     user_id: Optional[int] = Query(None),
     keyword: Optional[str] = Query(None),
-    date: Optional[date] = Query(None),
+    before_date: Optional[date] = Query(None),
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -74,8 +74,8 @@ async def get_all_modules(
                 UserModule.user_id == user_id
             )
 
-        if date is not None:
-            temp_query = temp_query.where(Module.created_at < date)
+        if before_date is not None:
+            temp_query = temp_query.where(Module.created_at < before_date)
 
     else:
         # user is not admin, only shows modules assigned to them
@@ -114,21 +114,48 @@ async def get_module(
     """
     Get a single module by ID.
     """
-    result = await db.execute(select(Module).where(Module.id == module_id))
-    module = result.scalar_one_or_none()
+    # show any module if user is admin
+    if current_user.role.name == "admin":
+        result = await db.execute(select(Module).where(Module.id == module_id))
+        module = result.scalar_one_or_none()
 
-    if module is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Module not found"
+        if module is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Module not found"
+            )
+
+        return {
+            "id": module.id,
+            "title": module.title,
+            "description": module.description,
+            "created_at": module.created_at,
+            "updated_at": module.updated_at,
+        }
+        # only show modules a user is associated with if non-admin
+    else:
+        result = await db.execute(
+            select(Module)
+            .join(UserModule)
+            .where(
+                UserModule.user_id == current_user.id,
+                Module.id == module_id,
+            )
         )
 
-    return {
-        "id": module.id,
-        "title": module.title,
-        "description": module.description,
-        "created_at": module.created_at,
-        "updated_at": module.updated_at,
-    }
+        module = result.scalar_one_or_none()
+
+        if module is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Module Not Found"
+            )
+
+        return {
+            "id": module.id,
+            "title": module.title,
+            "description": module.description,
+            "created_at": module.created_at,
+            "updated_at": module.updated_at,
+        }
 
 
 @router.post(
@@ -303,14 +330,8 @@ async def delete_module(
         )
     try:
         # delete ModulePosts associated with this module
-        module_posts = []
-        result = await db.execute(
-            select(ModulePost).where(ModulePost.module_id == module_id)
-        )
-        module_posts = result.scalars().all()
+        await db.execute(delete(ModulePost).where(ModulePost.module_id == module_id))
 
-        for mp in module_posts:
-            await db.delete(mp)
         await db.delete(module)
         await db.commit()
     except Exception as e:
